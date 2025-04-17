@@ -1,5 +1,6 @@
 package com.heri2go.chat.web.service.chat;
 
+import com.heri2go.chat.MockTestSupport;
 import com.heri2go.chat.domain.chat.Chat;
 import com.heri2go.chat.domain.chat.ChatRepository;
 import com.heri2go.chat.domain.chat.dto.ChatMessageReq;
@@ -7,10 +8,8 @@ import com.heri2go.chat.domain.chat.dto.ChatMessageResp;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -20,8 +19,8 @@ import java.time.LocalDateTime;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
-class ChatServiceTest {
+
+class ChatServiceTest extends MockTestSupport {
 
     @Mock
     private ChatRepository chatRepository;
