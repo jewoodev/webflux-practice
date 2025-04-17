@@ -1,9 +1,9 @@
-package com.heri2go.chat.web.controller;
+package com.heri2go.chat.web.controller.chat;
 
-import com.heri2go.chat.domain.dto.ChatMessageReq;
-import com.heri2go.chat.domain.dto.ChatMessageResp;
-import com.heri2go.chat.web.service.ChatService;
-import com.heri2go.chat.web.service.TranslateService;
+import com.heri2go.chat.domain.chat.dto.ChatMessageReq;
+import com.heri2go.chat.domain.chat.dto.ChatMessageResp;
+import com.heri2go.chat.web.service.chat.ChatService;
+import com.heri2go.chat.web.service.chat.TranslateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;

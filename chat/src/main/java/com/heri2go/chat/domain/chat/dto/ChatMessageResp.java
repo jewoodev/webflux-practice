@@ -1,6 +1,6 @@
-package com.heri2go.chat.domain.dto;
+package com.heri2go.chat.domain.chat.dto;
 
-import com.heri2go.chat.domain.Chat;
+import com.heri2go.chat.domain.chat.Chat;
 import lombok.Builder;
 
 import java.time.LocalDateTime;

@@ -1,9 +1,9 @@
-package com.heri2go.chat.web.service;
+package com.heri2go.chat.web.service.chat;
 
-import com.heri2go.chat.domain.Chat;
-import com.heri2go.chat.domain.ChatRepository;
-import com.heri2go.chat.domain.dto.ChatMessageReq;
-import com.heri2go.chat.domain.dto.ChatMessageResp;
+import com.heri2go.chat.domain.chat.Chat;
+import com.heri2go.chat.domain.chat.ChatRepository;
+import com.heri2go.chat.domain.chat.dto.ChatMessageReq;
+import com.heri2go.chat.domain.chat.dto.ChatMessageResp;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;

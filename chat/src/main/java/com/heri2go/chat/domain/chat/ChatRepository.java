@@ -1,4 +1,4 @@
-package com.heri2go.chat.domain;
+package com.heri2go.chat.domain.chat;
 
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import reactor.core.publisher.Flux;

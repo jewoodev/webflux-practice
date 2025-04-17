@@ -1,4 +1,4 @@
-package com.heri2go.chat.web.service;
+package com.heri2go.chat.web.service.chat;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;

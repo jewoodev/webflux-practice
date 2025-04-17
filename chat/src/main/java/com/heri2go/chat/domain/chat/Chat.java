@@ -1,6 +1,6 @@
-package com.heri2go.chat.domain;
+package com.heri2go.chat.domain.chat;
 
-import com.heri2go.chat.domain.dto.ChatMessageReq;
+import com.heri2go.chat.domain.chat.dto.ChatMessageReq;
 import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
