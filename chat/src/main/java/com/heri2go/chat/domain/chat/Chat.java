@@ -18,6 +18,7 @@ public class Chat {
     private String sender;
     private Long roomNum;
     private String lang;
+    private String senderId; // 세션 식별을 위한 ID
 
     private LocalDateTime createdAt;
 
