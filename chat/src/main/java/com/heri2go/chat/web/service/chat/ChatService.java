@@ -31,21 +31,18 @@ public class ChatService {
                 .map(ChatMessageResp::fromEntity);
     }
 
-    public Mono<String> processMessage(String messagePayload) {
-        return chatConverter.convertToReq(messagePayload)
-                .flatMap(chatMessageReq -> {
-                    if (chatMessageReq.getMsg() == null || chatMessageReq.getMsg().isEmpty()) {
-                        log.error("메세지 내용이 비어있어 에러 발생");
-                        return Mono.error(new MessageInvalidException("메세지 내용이 비어있어 에러 발생"));
-                    }
+    public Mono<String> processMessage(ChatMessageReq req) {
+        if (req.getMsg() == null || req.getMsg().isEmpty()) {
+            log.error("메세지 내용이 비어있어 에러 발생");
+            return Mono.error(new MessageInvalidException("메세지 내용이 비어있어 에러 발생"));
+        }
 
-                    // 비즈니스 로직: 메시지 저장
-                    return save(chatMessageReq)
-                            .flatMap(chatMessageResp -> chatConverter.convertToJson(chatMessageResp))
-                            .onErrorResume(JsonProcessingException.class, e -> {
-                                log.error("메세지 저장 후 응답 Dto로 변환 중 에러 발생: ", e);
-                                return Mono.error(new JsonConvertException("메세지 저장 후 응답 Dto로 변환 중 에러 발생"));
-                            });
+        // 비즈니스 로직: 메시지 저장
+        return save(req)
+                .flatMap(chatMessageResp -> chatConverter.convertToJson(chatMessageResp))
+                .onErrorResume(JsonProcessingException.class, e -> {
+                    log.error("메세지 저장 후 응답 Dto로 변환 중 에러 발생: ", e);
+                    return Mono.error(new JsonConvertException("메세지 저장 후 응답 Dto로 변환 중 에러 발생"));
                 });
     }
 }

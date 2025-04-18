@@ -15,6 +15,32 @@
 
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+  <style>
+    .system_msg {
+      padding: 10px;
+      text-align: center;
+    }
+
+    .system_msg_content {
+      display: inline-block;
+      background: #f0f0f0;
+      border-radius: 15px;
+      padding: 5px 15px;
+    }
+
+    .system_msg_content p {
+      color: #666;
+      margin: 0;
+    }
+
+    .system_msg_content .time_date {
+      color: #999;
+      font-size: 0.8em;
+      margin-top: 3px;
+      display: block;
+    }
+  </style>
 </head>
 
 <body>
@@ -51,7 +77,14 @@
 </div>
 
 </div>
-<script src="js/chat.js"></script>
+
+<!-- JavaScript 파일들을 순서대로 로드 -->
+<script src="/js/chatConfig.js"></script>
+<script src="/js/chatWebSocket.js"></script>
+<script src="/js/chatMessageHandler.js"></script>
+<script src="/js/chatUI.js"></script>
+<script src="/js/main.js"></script>
+
 
 <!-- jQuery first, then Popper.js, then Bootstrap JS -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

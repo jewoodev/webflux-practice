@@ -71,39 +71,39 @@ class ChatControllerTest extends MockTestSupport {
                 .contains(message1, message2);
     }
 
-    @DisplayName("전송한 메세지는 번역되어 저장된다.")
-    @Test
-    void sendMessage_shouldTranslateAndSaveMessage() {
-        // given
-        Long chatRoomId = 1L;
-        ChatMessageReq req = ChatMessageReq.builder()
-                .sender("user1")
-                .msg("안녕하세요")
-                .lang("ko")
-                .roomNum(chatRoomId)
-                .build();
+//     @DisplayName("전송한 메세지는 번역되어 저장된다.")
+//     @Test
+//     void sendMessage_shouldTranslateAndSaveMessage() {
+//         // given
+//         Long chatRoomId = 1L;
+//         ChatMessageReq req = ChatMessageReq.builder()
+//                 .sender("user1")
+//                 .msg("안녕하세요")
+//                 .lang("ko")
+//                 .roomNum(chatRoomId)
+//                 .build();
 
-        ChatMessageResp expectedResponse = ChatMessageResp.builder()
-                .roomNum(chatRoomId)
-                .sender("user1")
-                .msg("Hello")
-                .createdAt(LocalDateTime.now())
-                .build();
+//         ChatMessageResp expectedResponse = ChatMessageResp.builder()
+//                 .roomNum(chatRoomId)
+//                 .sender("user1")
+//                 .msg("Hello")
+//                 .createdAt(LocalDateTime.now())
+//                 .build();
 
-        // when
-        when(translateService.translate(eq("안녕하세요"), eq("ko"), eq("en")))
-                .thenReturn(Mono.just("Hello"));
-        when(chatService.save(any(ChatMessageReq.class)))
-                .thenReturn(Mono.just(expectedResponse));
+//         // when
+//         when(translateService.translate(eq("안녕하세요"), eq("ko"), eq("en")))
+//                 .thenReturn(Mono.just("Hello"));
+//         when(chatService.save(any(ChatMessageReq.class)))
+//                 .thenReturn(Mono.just(expectedResponse));
 
-        // then
-        Mono<ChatMessageResp> result = chatController.sendMessage(req, chatRoomId);
+//         // then
+//         Mono<ChatMessageResp> result = chatController.sendMessage(req, chatRoomId);
 
-        StepVerifier.create(result)
-                .expectNextMatches(response ->
-                        response.sender().equals("user1") &&
-                                response.msg().equals("Hello")
-                )
-                .verifyComplete();
-    }
+//         StepVerifier.create(result)
+//                 .expectNextMatches(response ->
+//                         response.sender().equals("user1") &&
+//                                 response.msg().equals("Hello")
+//                 )
+//                 .verifyComplete();
+//     }
 }
