@@ -10,12 +10,18 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class ChatMessageReq {
-    String sender;
-    String msg;
-    Long roomNum;
-    String lang;
+    private String sender;
+    private String msg;
+    private Long roomNum;
+    private String lang;
+    private MessageType type;
+
 
     public void setMsgAfterTranslate(String msg) {
         this.msg = msg;
+    }
+
+    public enum MessageType {
+        ENTER, TALK, LEAVE
     }
 }
