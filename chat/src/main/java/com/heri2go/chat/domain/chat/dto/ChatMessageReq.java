@@ -14,13 +14,8 @@ public class ChatMessageReq {
     String msg;
     Long roomNum;
     String lang;
-    String senderId; // 세션 식별을 위한 ID
 
     public void setMsgAfterTranslate(String msg) {
         this.msg = msg;
-    }
-
-    public void setSenderId(String senderId) {
-        this.senderId = senderId;
     }
 }

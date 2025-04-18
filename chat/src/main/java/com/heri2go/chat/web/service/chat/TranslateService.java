@@ -50,6 +50,7 @@ public class TranslateService {
         });
     }
 
+
     public Mono<String> translate(String text, String srcLang, String targetLang) {
         if (text == null || text.isEmpty()) {
             return Mono.just("");
@@ -75,4 +76,5 @@ public class TranslateService {
                     return Mono.just(text);
                 });
     }
+
 }

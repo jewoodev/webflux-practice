@@ -10,8 +10,7 @@ public record ChatMessageResp(
         String sender,
         String msg,
         Long roomNum,
-        LocalDateTime createdAt,
-        String senderId // 세션 식별을 위한 ID
+        LocalDateTime createdAt
 ) {
 
     public static ChatMessageResp fromEntity(Chat chat) {
@@ -20,7 +19,6 @@ public record ChatMessageResp(
                 .msg(chat.getMsg())
                 .roomNum(chat.getRoomNum())
                 .createdAt(chat.getCreatedAt())
-                .senderId(chat.getSenderId())
                 .build();
     }
 }
