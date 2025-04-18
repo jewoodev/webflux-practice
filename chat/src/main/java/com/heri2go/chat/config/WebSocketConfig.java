@@ -1,24 +1,28 @@
 package com.heri2go.chat.config;
 
+import com.heri2go.chat.web.service.chat.ChatService;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.reactive.HandlerMapping;
+import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping;
+import org.springframework.web.reactive.socket.WebSocketHandler;
+import org.springframework.web.reactive.socket.WebSocketMessage;
+
+import java.util.Map;
 
 @Configuration
-@EnableWebSocketMessageBroker
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
-    @Override
-    public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/subscribe");
-        registry.setApplicationDestinationPrefixes("/publish");
+public class WebSocketConfig {
+    @Bean
+    public HandlerMapping webSocketMapping(WebSocketHandler chatWebSocketHandler) {
+        return new SimpleUrlHandlerMapping(Map.of("/ws-connect", chatWebSocketHandler), -1);
     }
 
-    @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws-connect")
-                .setAllowedOriginPatterns("*")
-                .withSockJS();
+    @Bean
+    public WebSocketHandler chatWebSocketHandler(ChatService chatService) {
+        return session -> session.receive()
+                .map(WebSocketMessage::getPayloadAsText)
+                .flatMap(chatService::processMessage) // 비동기 처리
+                .map(session::textMessage)
+                .as(session::send);
     }
 }

@@ -17,7 +17,7 @@ public class Chat {
     private String msg;
     private String sender;
     private Long roomNum;
-    private String lang;
+    private String lang; // 채팅을 작성한 유저가 사용한 언어
 
     private LocalDateTime createdAt;
 
@@ -30,11 +30,12 @@ public class Chat {
         this.createdAt = createdAt;
     }
 
-    public static Chat fromReq(ChatMessageReq req) {
+    public static Chat fromReq(ChatMessageReq req) { // 메세지 Request 로부터 최초로 생성하는 Chat
         return Chat.builder()
                 .msg(req.getMsg())
                 .sender(req.getSender())
                 .roomNum(req.getRoomNum())
+                .lang(req.getLang())
                 .createdAt(LocalDateTime.now())
                 .build();
     }

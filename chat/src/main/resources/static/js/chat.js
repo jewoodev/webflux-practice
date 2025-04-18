@@ -5,22 +5,29 @@ let lang = prompt("사용하는 언어를 입력하세요.")
 
 document.querySelector("#username").innerHTML = username;
 
-const socket = new SockJS("/ws-connect");
-const stompClient = Stomp.over(socket);
+// WebSocket 연결
+const ws = new WebSocket(`ws://${window.location.host}/ws-connect`);
 
-// 연결
-stompClient.connect({}, function () {
-    // 1. 먼저 이전 채팅 기록을 1회만 불러오기
-    fetchChatHistory(roomNum).then(() => {
-        // 2. 채팅방 실시간 메세지 구독 시작
-        stompClient.subscribe(`/subscribe/chat.${roomNum}`, function (messageOutput) {
-            const chat = JSON.parse(messageOutput.body);
+// WebSocket 이벤트 핸들러
+ws.onopen = () => {
+    console.log('WebSocket 연결 성공');
+    // 연결 성공 후 채팅 기록 불러오기
+    fetchChatHistory(roomNum);
+};
 
-            console.log(" 수신된 메세지: ", chat);
-            initMessage(chat);
-        });
-    })
-});
+ws.onmessage = (event) => {
+    const chat = JSON.parse(event.data);
+    console.log("수신된 메세지:", chat);
+    initMessage(chat);
+};
+
+ws.onerror = (error) => {
+    console.error('WebSocket 에러:', error);
+};
+
+ws.onclose = () => {
+    console.log('WebSocket 연결 종료');
+};
 
 async function fetchChatHistory(roomNum) {
     const res = await fetch(`/chat/${roomNum}`);
@@ -41,10 +48,17 @@ function initMessage(chat) {
 
 // 파란 박스 만들기
 function getSendMsgBox(msg) {
+    let convertTime = "";
 
-    const md = msg.createdAt.substring(5, 10);
-    const tm = msg.createdAt.substring(11, 16);
-    const convertTime = tm + "  |  " + md;
+    if (msg.createdAt) {
+        const md = msg.createdAt.substring(5, 10);
+        const tm = msg.createdAt.substring(11, 16);
+        convertTime = tm + "  |  " + md;
+    } else {
+        console.log("createdAt 파싱 실패");
+        convertTime = new Date().toLocaleString(); // 현재 시간을 대신 표시
+    }
+
 
     return `<div class="sent_msg">
               <p>${msg.msg}</p>
@@ -67,10 +81,17 @@ function initMyMessage(historyMsg) {
 
 // 회색 박스 만들기
 function getReceiveMsgBox(msg) {
+    let convertTime = "";
 
-    const md = msg.createdAt.substring(5, 10);
-    const tm = msg.createdAt.substring(11, 16);
-    const convertTime = tm + "  |  " + md;
+    if (msg.createdAt) {
+        const md = msg.createdAt.substring(5, 10);
+        const tm = msg.createdAt.substring(11, 16);
+        convertTime = tm + "  |  " + md;
+    } else {
+        console.log("createdAt 파싱 실패");
+        convertTime = new Date().toLocaleString(); // 현재 시간을 대신 표시
+    }
+
 
     return `<div class="received_withd_msg">
               <p>${msg.msg}</p>
@@ -92,7 +113,7 @@ function initYourMessage(historyMsg) {
 }
 
 // 채팅 메세지를 전송
-async function addMessage() {
+function addMessage() {
     const msgInput = document.querySelector("#chat-outgoing-msg");
 
     const chat = {
@@ -102,116 +123,19 @@ async function addMessage() {
         lang: lang
     };
 
-    stompClient.send(`/publish/chat.${roomNum}`, {}, JSON.stringify(chat));
-
+    // WebSocket을 통해 메시지 전송
+    ws.send(JSON.stringify(chat));
     msgInput.value = "";
 }
 
 // 버튼 클릭 시 메세지 전송
 document.querySelector("#chat-send").addEventListener("click", () => {
     addMessage();
-})
+});
 
 // 엔터 타건 시 메세지 전송
 document.querySelector("#chat-outgoing-msg").addEventListener("keydown", (event) => {
     if (event.keyCode === 13) {
         addMessage();
     }
-})
-
-
-// // SSE 연결하기
-// const eventSource = new EventSource(`http://localhost:8080/chat/roomNum/${roomNum}`);
-// eventSource.onmessage = (event) => {
-//     const data = JSON.parse(event.data);
-//     if (data.sender === username) {
-//         initMyMessage(data);
-//     } else {
-//         initYourMessage(data);
-//     }
-// }
-//
-// // 파란 박스 만들기
-// function getSendMsgBox(msg) {
-//
-//     const md = msg.createdAt.substring(5, 10);
-//     const tm = msg.createdAt.substring(11, 16);
-//     const convertTime = tm + "  |  " + md;
-//
-//     return `<div class="sent_msg">
-//               <p>${msg.msg}</p>
-//               <span class="time_date"> ${convertTime} / ${msg.sender} </span>
-//             </div>`;
-// }
-//
-// // 파란박스 초기화
-// function initMyMessage(historyMsg) {
-//     let chatBox = document.querySelector("#chat-box");
-//
-//     let sendBox = document.createElement("div");
-//     sendBox.className = "outgoing_msg";
-//
-//     sendBox.innerHTML = getSendMsgBox(historyMsg);
-//     chatBox.append(sendBox);
-//
-//     document.documentElement.scrollTop = document.body.scrollHeight;
-// }
-//
-// // 회색 박스 만들기
-// function getReceiveMsgBox(msg) {
-//
-//     const md = msg.createdAt.substring(5, 10);
-//     const tm = msg.createdAt.substring(11, 16);
-//     const convertTime = tm + "  |  " + md;
-//
-//     return `<div class="received_withd_msg">
-//               <p>${msg.msg}</p>
-//               <span class="time_date"> ${convertTime} / ${msg.sender} </span>
-//             </div>`;
-// }
-//
-// // 회색 박스 초기화
-// function initYourMessage(historyMsg) {
-//     let chatBox = document.querySelector("#chat-box");
-//
-//     let receivedBox = document.createElement("div");
-//     receivedBox.className = "received_msg";
-//
-//     receivedBox.innerHTML = getReceiveMsgBox(historyMsg);
-//     chatBox.append(receivedBox);
-//
-//     document.documentElement.scrollTop = document.body.scrollHeight;
-// }
-//
-// // AJAX 채팅 메세지를 전송
-// async function addMessage() {
-//     let msgInput = document.querySelector("#chat-outgoing-msg");
-//
-//     let chat = {
-//         sender: username,
-//         roomNum: roomNum,
-//         msg: msgInput.value
-//     };
-//
-//     await fetch("http://localhost:8080/chat", {
-//         method: "post",
-//         body: JSON.stringify(chat),
-//         headers: {
-//             "Content-Type": "application/json; charset=utf-8"
-//         }
-//     });
-//
-//     msgInput.value = "";
-// }
-//
-// // 버튼 클릭 시 메세지 전송
-// document.querySelector("#chat-send").addEventListener("click", () => {
-//     addMessage();
-// });
-//
-// // 엔터 타건 시 메세지 전송
-// document.querySelector("#chat-outgoing-msg").addEventListener("keydown", (event) => {
-//     if (event.keyCode === 13) {
-//         addMessage();
-//     }
-// });
+});
