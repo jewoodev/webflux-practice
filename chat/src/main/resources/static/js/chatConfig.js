@@ -16,7 +16,10 @@ const ChatConfig = {
 
     // API 엔드포인트
     endpoints: {
-        ws: `ws://${window.location.host}/ws-connect`,
+        ws: () => {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            return `${protocol}//${window.location.host}/ws-connect`;
+        },
         chatHistory: (roomNum) => `/chat/${roomNum}`
     }
 };
