@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -17,6 +18,7 @@ public class ChatConverter {
 
     public Mono<ChatMessageReq> convertToReq(String messagePayload) {
         return Mono.fromCallable(() -> objectMapper.readValue(messagePayload, ChatMessageReq.class))
+                .subscribeOn(Schedulers.boundedElastic())
                 .onErrorResume(e -> {
                     log.error("메세지 -> ChatMessageReq 변환 중 에러 발생: ", e);
                     return Mono.error(new JsonConvertException("메세지 -> ChatMessageReq 변환 중 에러 발생"));
@@ -25,6 +27,7 @@ public class ChatConverter {
 
     public Mono<String> convertToJson(Object object) {
         return Mono.fromCallable(() -> objectMapper.writeValueAsString(object))
+                .subscribeOn(Schedulers.boundedElastic())
                 .onErrorMap(JsonProcessingException.class, e -> {
                     log.error("JSON 변환 중 에러 발생: ", e);
                     return new JsonConvertException("JSON 변환 중 에러 발생");
