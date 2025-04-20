@@ -1,0 +1,32 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb_boot
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data:/data
+
+  redis:
+    image: redis:alpine
+    container_name: redis_boot
+    command: [ "redis-server" ]
+    hostname: redis
+    volumes:
+      - ./redis_data:/data
+    ports:
+      - "6379:6379"
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: redis_insight
+    restart: always
+    ports:
+      - "5540:5540"
+    environment:
+      - REDISINSIGHT_HOST=0.0.0.0
+      - REDISINSIGHT_PORT=8001
+    volumes:
+      - ./redis_data:/db
+    depends_on:
+      - redis
