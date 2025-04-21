@@ -2,23 +2,17 @@ package com.heri2go.chat.domain.chat;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+
+import com.heri2go.chat.MongoTestSupport;
+
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
-@DataMongoTest
-class ChatRepositoryTest {
-    @Autowired
-    private ChatRepository chatRepository;
-
-    @Autowired
-    private ReactiveMongoTemplate reactiveMongoTemplate;
-
+class ChatRepositoryTest extends MongoTestSupport {
+    
     @BeforeEach
     public void setup() {
         // 테스트 전에 컬렉션을 비웁니다
@@ -27,7 +21,7 @@ class ChatRepositoryTest {
                 .block();
     }
 
-
+    @DisplayName("방 번호에 알맞은 메시지들을 제공한다.")
     @Test
     public void testFindByRoomNumOrderByCreatedAt() {
         // 테스트 데이터 준비
