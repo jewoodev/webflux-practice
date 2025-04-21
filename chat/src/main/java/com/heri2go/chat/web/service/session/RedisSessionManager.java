@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import static com.heri2go.chat.web.service.session.SessionKey.*;
 
 import java.time.Duration;
 import java.util.Map;
@@ -15,8 +16,7 @@ import java.util.Map;
 public class RedisSessionManager {
 
     private final ReactiveRedisTemplate<String, String> redisTemplate;
-    private static final String SESSION_KEY_PREFIX = "chat:session:";
-    public static final String ROOM_KEY_PREFIX = "chat:room:";
+    
     private static final Duration SESSION_TTL = Duration.ofHours(1);
 
     public Mono<Void> saveSession(String sessionId, String roomId, String username) {

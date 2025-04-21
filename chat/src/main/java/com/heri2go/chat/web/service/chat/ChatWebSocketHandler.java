@@ -14,6 +14,8 @@ import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Mono;
 
+import static com.heri2go.chat.web.service.session.SessionKey.*;
+
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
@@ -30,11 +32,11 @@ public class ChatWebSocketHandler implements WebSocketHandler {
 
     @PostConstruct
     public void initSubscription() {
-        redisTemplate.listenToPattern(RedisSessionManager.ROOM_KEY_PREFIX + "*")
+        redisTemplate.listenToPattern(ROOM_KEY_PREFIX + "*")
                 .doOnError(error -> log.error("Redis subscription error: ", error))
                 .flatMap(message -> {
                     String channel = message.getChannel();
-                    Long roomNum = Long.valueOf(channel.substring(RedisSessionManager.ROOM_KEY_PREFIX.length()));
+                    Long roomNum = Long.valueOf(channel.substring(ROOM_KEY_PREFIX.length()));
                     return broadcastToRoom(roomNum, message.getMessage());
                 })
                 .subscribe();
@@ -94,7 +96,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     private Mono<Void> publishMessage(ChatMessageReq chatMessage) {
         return chatConverter.convertToJson(chatMessage)
                 .flatMap(message -> redisTemplate.convertAndSend(
-                        RedisSessionManager.ROOM_KEY_PREFIX + chatMessage.getRoomNum(), 
+                        ROOM_KEY_PREFIX + chatMessage.getRoomNum(), 
                         message))
                 .then();
     }
