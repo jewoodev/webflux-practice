@@ -17,6 +17,7 @@ import reactor.test.StepVerifier;
 import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 
@@ -24,6 +25,9 @@ class ChatServiceTest extends MockTestSupport {
 
     @Mock
     private ChatRepository chatRepository;
+
+    @Mock
+    private SentimentService sentimentService;
 
     @InjectMocks
     private ChatService chatService;
@@ -55,7 +59,7 @@ class ChatServiceTest extends MockTestSupport {
     void save_shouldReturnChatMessageResp() {
         // Given
         when(chatRepository.save(any(Chat.class))).thenReturn(Mono.just(sampleChat));
-
+        when(sentimentService.analyzeSentiment(anyString())).thenReturn(Mono.just(0.5));
         // When
         Mono<ChatMessageResp> result = chatService.save(sampleReq);
 
