@@ -19,7 +19,7 @@ public class ChatController {
     private final ChatService chatService;
 
     @GetMapping("/chat/{roomNum}")
-    public Flux<ChatMessageResp> getChatHistory(@PathVariable Long roomNum) {
+    public Flux<ChatMessageResp> getChatHistory(@PathVariable("roomNum") Long roomNum) {
         return chatService.getByRoomNum(roomNum);
     }
 

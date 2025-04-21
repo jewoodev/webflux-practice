@@ -20,9 +20,15 @@ import reactor.core.publisher.Mono;
 public class ChatService {
     private final ChatRepository chatRepository;
     private final ChatConverter chatConverter;
+    private final SentimentService sentimentService;
 
     public Mono<ChatMessageResp> save(ChatMessageReq req) {
-        return chatRepository.save(Chat.fromReq(req))
+        return sentimentService.analyzeSentiment(req.getMsg())
+                .flatMap(sentimentScore -> {
+                    Chat chat = Chat.fromReq(req);
+                    chat.setSentimentScore(sentimentScore);
+                    return chatRepository.save(chat);
+                })
                 .map(ChatMessageResp::fromEntity);
     }
 
