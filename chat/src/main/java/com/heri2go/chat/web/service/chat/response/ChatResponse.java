@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 @Builder
 public record ChatResponse(
         String sender,
-        String msg,
+        String content,
         Long roomNum,
         Double sentimentScore,
         LocalDateTime createdAt
@@ -17,7 +17,7 @@ public record ChatResponse(
     public static ChatResponse fromEntity(Chat chat) {
         return ChatResponse.builder()
                 .sender(chat.getSender())
-                .msg(chat.getMsg())
+                .content(chat.getContent())
                 .roomNum(chat.getRoomNum())
                 .sentimentScore(chat.getSentimentScore())
                 .createdAt(chat.getCreatedAt())

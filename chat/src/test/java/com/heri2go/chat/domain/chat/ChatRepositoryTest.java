@@ -30,25 +30,25 @@ class ChatRepositoryTest extends MongoTestSupport {
 
         Chat chat1 = Chat.builder()
                 .roomNum(1L)
-                .msg("첫 번째 메시지")
+                .content("첫 번째 메시지")
                 .createdAt(now.minusMinutes(2))
                 .build();
 
         Chat chat2 = Chat.builder()
                 .roomNum(1L)
-                .msg("두 번째 메시지")
+                .content("두 번째 메시지")
                 .createdAt(now.minusMinutes(1))
                 .build();
 
         Chat chat3 = Chat.builder()
                 .roomNum(1L)
-                .msg("세 번째 메시지")
+                .content("세 번째 메시지")
                 .createdAt(now)
                 .build();
 
         Chat chat4 = Chat.builder()
                 .roomNum(2L)
-                .msg("다른 방 메시지")
+                .content("다른 방 메시지")
                 .createdAt(now)
                 .build();
 
@@ -62,9 +62,9 @@ class ChatRepositoryTest extends MongoTestSupport {
 
         // 검증
         StepVerifier.create(result)
-                .expectNextMatches(chat -> chat.getMsg().equals("첫 번째 메시지"))
-                .expectNextMatches(chat -> chat.getMsg().equals("두 번째 메시지"))
-                .expectNextMatches(chat -> chat.getMsg().equals("세 번째 메시지"))
+                .expectNextMatches(chat -> chat.getContent().equals("첫 번째 메시지"))
+                .expectNextMatches(chat -> chat.getContent().equals("두 번째 메시지"))
+                .expectNextMatches(chat -> chat.getContent().equals("세 번째 메시지"))
                 .verifyComplete();
     }
 }

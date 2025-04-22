@@ -5,7 +5,7 @@ import lombok.Builder;
 @Builder
 public record ChatCreateRequest(
     String sender,
-    String msg,
+    String content,
     Long roomNum,
     String lang,
     MessageType type
@@ -13,7 +13,7 @@ public record ChatCreateRequest(
     public static ChatCreateRequest withTranslatedMsg(ChatCreateRequest req, String translatedMessage) {
         return ChatCreateRequest.builder()
                 .sender(req.sender())
-                .msg(translatedMessage)
+                .content(translatedMessage)
                 .roomNum(req.roomNum())
                 .lang(req.lang())
                 .type(req.type())

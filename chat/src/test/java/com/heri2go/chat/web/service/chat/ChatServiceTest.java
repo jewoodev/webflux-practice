@@ -39,7 +39,7 @@ class ChatServiceTest extends MockTestSupport {
                 // 테스트용 샘플 데이터 생성
                 sampleChat = Chat.builder()
                                 .sender("testUser")
-                                .msg("Hello, WebFlux!")
+                                .content("Hello, WebFlux!")
                                 .roomNum(101L)
                                 .lang("en")
                                 .createdAt(LocalDateTime.now())
@@ -47,7 +47,7 @@ class ChatServiceTest extends MockTestSupport {
 
                 sampleReq = ChatCreateRequest.builder()
                                 .sender("testUser")
-                                .msg("Hello, WebFlux!")
+                                .content("Hello, WebFlux!")
                                 .roomNum(101L)
                                 .lang("en")
                                 .build();
@@ -64,9 +64,9 @@ class ChatServiceTest extends MockTestSupport {
 
                 // Then
                 StepVerifier.create(result)
-                                .expectNextMatches(resp -> resp.roomNum().equals(sampleReq.getRoomNum()) &&
-                                                resp.sender().equals(sampleReq.getSender()) &&
-                                                resp.msg().equals(sampleReq.getMsg()))
+                                .expectNextMatches(resp -> resp.roomNum().equals(sampleReq.roomNum()) &&
+                                                resp.sender().equals(sampleReq.sender()) &&
+                                                resp.content().equals(sampleReq.content()))
                                 .verifyComplete();
         }
 
@@ -84,7 +84,7 @@ class ChatServiceTest extends MockTestSupport {
                 StepVerifier.create(result)
                                 .expectNextMatches(resp -> resp.roomNum().equals(101L) &&
                                                 resp.sender().equals("testUser") &&
-                                                resp.msg().equals("Hello, WebFlux!"))
+                                                resp.content().equals("Hello, WebFlux!"))
                                 .verifyComplete();
         }
 

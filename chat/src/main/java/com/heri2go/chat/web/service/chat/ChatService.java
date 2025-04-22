@@ -23,7 +23,7 @@ public class ChatService {
     private final SentimentService sentimentService;
 
     public Mono<ChatResponse> save(ChatCreateRequest req) {
-        return sentimentService.analyzeSentiment(req.getMsg())
+        return sentimentService.analyzeSentiment(req.content())
                 .flatMap(sentimentScore -> {
                     Chat chat = Chat.fromReq(req);
                     chat.setSentimentScore(sentimentScore);
@@ -38,7 +38,7 @@ public class ChatService {
     }
 
     public Mono<String> processMessage(ChatCreateRequest req) {
-        if (req.getMsg() == null || req.getMsg().isEmpty()) {
+        if (req.content() == null || req.content().isEmpty()) {
             log.error("메세지 내용이 비어있어 에러 발생");
             return Mono.error(new MessageInvalidException("메세지 내용이 비어있어 에러 발생"));
         }

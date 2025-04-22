@@ -17,7 +17,7 @@ public class Chat {
 
     @Id
     private String id;
-    private String msg;
+    private String content;
     private String sender;
     private Long roomNum;
     private String lang; // 채팅을 작성한 유저가 사용한 언어
@@ -26,8 +26,8 @@ public class Chat {
     private LocalDateTime createdAt;
 
     @Builder
-    private Chat(String msg, String sender, Long roomNum, String lang, Double sentimentScore, LocalDateTime createdAt) {
-        this.msg = msg;
+    private Chat(String content, String sender, Long roomNum, String lang, Double sentimentScore, LocalDateTime createdAt) {
+        this.content = content;
         this.sender = sender;
         this.roomNum = roomNum;
         this.lang = lang;
@@ -37,10 +37,10 @@ public class Chat {
 
     public static Chat fromReq(ChatCreateRequest req) { // 메세지 Request 로부터 최초로 생성하는 Chat
         return Chat.builder()
-                .msg(req.getMsg())
-                .sender(req.getSender())
-                .roomNum(req.getRoomNum())
-                .lang(req.getLang())
+                .content(req.content())
+                .sender(req.sender())
+                .roomNum(req.roomNum())
+                .lang(req.lang())
                 .sentimentScore(null)
                 .createdAt(LocalDateTime.now())
                 .build();
