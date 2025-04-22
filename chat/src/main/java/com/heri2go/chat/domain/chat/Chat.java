@@ -1,11 +1,12 @@
 package com.heri2go.chat.domain.chat;
 
-import com.heri2go.chat.domain.chat.dto.ChatMessageReq;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
 
 import java.time.LocalDateTime;
 
@@ -34,7 +35,7 @@ public class Chat {
         this.createdAt = createdAt;
     }
 
-    public static Chat fromReq(ChatMessageReq req) { // 메세지 Request 로부터 최초로 생성하는 Chat
+    public static Chat fromReq(ChatCreateRequest req) { // 메세지 Request 로부터 최초로 생성하는 Chat
         return Chat.builder()
                 .msg(req.getMsg())
                 .sender(req.getSender())

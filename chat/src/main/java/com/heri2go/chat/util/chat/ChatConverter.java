@@ -2,7 +2,7 @@ package com.heri2go.chat.util.chat;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.heri2go.chat.domain.chat.dto.ChatMessageReq;
+import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
 import com.heri2go.chat.web.exception.JsonConvertException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +16,8 @@ import reactor.core.scheduler.Schedulers;
 public class ChatConverter {
     private final ObjectMapper objectMapper;
 
-    public Mono<ChatMessageReq> convertToReq(String messagePayload) {
-        return Mono.fromCallable(() -> objectMapper.readValue(messagePayload, ChatMessageReq.class))
+    public Mono<ChatCreateRequest> convertToReq(String messagePayload) {
+        return Mono.fromCallable(() -> objectMapper.readValue(messagePayload, ChatCreateRequest.class))
                 .subscribeOn(Schedulers.boundedElastic())
                 .onErrorResume(e -> {
                     log.error("메세지 -> ChatMessageReq 변환 중 에러 발생: ", e);

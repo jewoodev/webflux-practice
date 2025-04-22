@@ -3,8 +3,8 @@ package com.heri2go.chat.web.service.chat;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.heri2go.chat.domain.chat.Chat;
 import com.heri2go.chat.domain.chat.ChatRepository;
-import com.heri2go.chat.domain.chat.dto.ChatMessageReq;
-import com.heri2go.chat.domain.chat.dto.ChatMessageResp;
+import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
+import com.heri2go.chat.web.service.chat.response.ChatResponse;
 import com.heri2go.chat.util.chat.ChatConverter;
 import com.heri2go.chat.web.exception.JsonConvertException;
 import com.heri2go.chat.web.exception.MessageInvalidException;
@@ -22,22 +22,22 @@ public class ChatService {
     private final ChatConverter chatConverter;
     private final SentimentService sentimentService;
 
-    public Mono<ChatMessageResp> save(ChatMessageReq req) {
+    public Mono<ChatResponse> save(ChatCreateRequest req) {
         return sentimentService.analyzeSentiment(req.getMsg())
                 .flatMap(sentimentScore -> {
                     Chat chat = Chat.fromReq(req);
                     chat.setSentimentScore(sentimentScore);
                     return chatRepository.save(chat);
                 })
-                .map(ChatMessageResp::fromEntity);
+                .map(ChatResponse::fromEntity);
     }
 
-    public Flux<ChatMessageResp> getByRoomNum(Long roomNum) {
+    public Flux<ChatResponse> getByRoomNum(Long roomNum) {
         return chatRepository.findByRoomNumOrderByCreatedAt(roomNum)
-                .map(ChatMessageResp::fromEntity);
+                .map(ChatResponse::fromEntity);
     }
 
-    public Mono<String> processMessage(ChatMessageReq req) {
+    public Mono<String> processMessage(ChatCreateRequest req) {
         if (req.getMsg() == null || req.getMsg().isEmpty()) {
             log.error("메세지 내용이 비어있어 에러 발생");
             return Mono.error(new MessageInvalidException("메세지 내용이 비어있어 에러 발생"));

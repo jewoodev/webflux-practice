@@ -1,7 +1,7 @@
 package com.heri2go.chat.web.controller.chat;
 
 import com.heri2go.chat.MockTestSupport;
-import com.heri2go.chat.domain.chat.dto.ChatMessageResp;
+import com.heri2go.chat.web.service.chat.response.ChatResponse;
 import com.heri2go.chat.web.service.chat.ChatService;
 import com.heri2go.chat.web.service.chat.TranslateService;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,14 +40,14 @@ class ChatControllerTest extends MockTestSupport {
     void getChatHistory_shouldReturnChatMessages() {
         // given
         Long roomNum = 1L;
-        ChatMessageResp message1 = ChatMessageResp.builder()
+        ChatResponse message1 = ChatResponse.builder()
                 .roomNum(roomNum)
                 .sender("user1")
                 .msg("안녕하세요")
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        ChatMessageResp message2 = ChatMessageResp.builder()
+        ChatResponse message2 = ChatResponse.builder()
                 .roomNum(roomNum)
                 .sender("user2")
                 .msg("Hi there")
@@ -62,7 +62,7 @@ class ChatControllerTest extends MockTestSupport {
                 .uri("/chat/{roomNum}", roomNum)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBodyList(ChatMessageResp.class)
+                .expectBodyList(ChatResponse.class)
                 .hasSize(2)
                 .contains(message1, message2);
     }

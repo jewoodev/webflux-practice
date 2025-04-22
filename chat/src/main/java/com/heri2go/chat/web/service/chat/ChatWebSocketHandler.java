@@ -1,9 +1,8 @@
 package com.heri2go.chat.web.service.chat;
 
-import com.heri2go.chat.domain.chat.dto.ChatMessageReq;
+import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
 import com.heri2go.chat.util.chat.ChatConverter;
 import com.heri2go.chat.web.service.session.RedisSessionManager;
-
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,10 +13,10 @@ import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Mono;
 
-import static com.heri2go.chat.web.service.session.SessionKey.*;
-
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static com.heri2go.chat.web.service.session.SessionKey.ROOM_KEY_PREFIX;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -75,25 +74,25 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                 });
     }
 
-    private Mono<Void> handleEnterMessage(WebSocketSession session, ChatMessageReq message) {
+    private Mono<Void> handleEnterMessage(WebSocketSession session, ChatCreateRequest message) {
         return sessionManager.saveSession(session.getId(), 
                                         message.getRoomNum().toString(), 
                                         message.getSender())
                 .then(publishMessage(message));
     }
 
-    private Mono<Void> handleLeaveMessage(WebSocketSession session, ChatMessageReq message) {
+    private Mono<Void> handleLeaveMessage(WebSocketSession session, ChatCreateRequest message) {
         return sessionManager.removeSession(session.getId())
                 .then(publishMessage(message));
     }
 
-    private Mono<Void> handleChatMessage(ChatMessageReq message) {
+    private Mono<Void> handleChatMessage(ChatCreateRequest message) {
         return chatService.processMessage(message)
             .flatMap(jsonMessage -> publishMessage(message))
             .then();
     }
 
-    private Mono<Void> publishMessage(ChatMessageReq chatMessage) {
+    private Mono<Void> publishMessage(ChatCreateRequest chatMessage) {
         return chatConverter.convertToJson(chatMessage)
                 .flatMap(message -> redisTemplate.convertAndSend(
                         ROOM_KEY_PREFIX + chatMessage.getRoomNum(), 

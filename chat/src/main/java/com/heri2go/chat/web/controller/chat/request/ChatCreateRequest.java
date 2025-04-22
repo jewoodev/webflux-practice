@@ -1,4 +1,4 @@
-package com.heri2go.chat.domain.chat.dto;
+package com.heri2go.chat.web.controller.chat.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Getter
 @NoArgsConstructor
-public class ChatMessageReq {
+public class ChatCreateRequest {
     private String sender;
     private String msg;
     private Long roomNum;
