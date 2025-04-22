@@ -1,24 +1,23 @@
 package com.heri2go.chat.web.controller.chat.request;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Builder
-@AllArgsConstructor
-@Getter
-@NoArgsConstructor
-public class ChatCreateRequest {
-    private String sender;
-    private String msg;
-    private Long roomNum;
-    private String lang;
-    private MessageType type;
-
-
-    public void setMsgAfterTranslate(String msg) {
-        this.msg = msg;
+public record ChatCreateRequest(
+    String sender,
+    String msg,
+    Long roomNum,
+    String lang,
+    MessageType type
+) {
+    public static ChatCreateRequest withTranslatedMsg(ChatCreateRequest req, String translatedMessage) {
+        return ChatCreateRequest.builder()
+                .sender(req.sender())
+                .msg(translatedMessage)
+                .roomNum(req.roomNum())
+                .lang(req.lang())
+                .type(req.type())
+                .build();
     }
 
     public enum MessageType {
