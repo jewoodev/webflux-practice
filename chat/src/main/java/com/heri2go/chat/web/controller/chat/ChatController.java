@@ -1,6 +1,6 @@
 package com.heri2go.chat.web.controller.chat;
 
-import com.heri2go.chat.domain.chat.dto.ChatMessageResp;
+import com.heri2go.chat.web.service.chat.response.ChatResponse;
 import com.heri2go.chat.web.service.chat.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ public class ChatController {
     private final ChatService chatService;
 
     @GetMapping("/chat/{roomNum}")
-    public Flux<ChatMessageResp> getChatHistory(@PathVariable("roomNum") Long roomNum) {
+    public Flux<ChatResponse> getChatHistory(@PathVariable("roomNum") Long roomNum) {
         return chatService.getByRoomNum(roomNum);
     }
 

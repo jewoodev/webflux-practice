@@ -1,4 +1,4 @@
-package com.heri2go.chat.domain.chat.dto;
+package com.heri2go.chat.web.service.chat.response;
 
 import com.heri2go.chat.domain.chat.Chat;
 import lombok.Builder;
@@ -6,18 +6,18 @@ import lombok.Builder;
 import java.time.LocalDateTime;
 
 @Builder
-public record ChatMessageResp(
+public record ChatResponse(
         String sender,
-        String msg,
+        String content,
         Long roomNum,
         Double sentimentScore,
         LocalDateTime createdAt
 ) {
 
-    public static ChatMessageResp fromEntity(Chat chat) {
-        return ChatMessageResp.builder()
+    public static ChatResponse fromEntity(Chat chat) {
+        return ChatResponse.builder()
                 .sender(chat.getSender())
-                .msg(chat.getMsg())
+                .content(chat.getContent())
                 .roomNum(chat.getRoomNum())
                 .sentimentScore(chat.getSentimentScore())
                 .createdAt(chat.getCreatedAt())

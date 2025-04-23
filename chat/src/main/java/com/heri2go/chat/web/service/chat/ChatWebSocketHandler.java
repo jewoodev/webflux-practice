@@ -1,9 +1,8 @@
 package com.heri2go.chat.web.service.chat;
 
-import com.heri2go.chat.domain.chat.dto.ChatMessageReq;
+import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
 import com.heri2go.chat.util.chat.ChatConverter;
 import com.heri2go.chat.web.service.session.RedisSessionManager;
-
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,10 +13,10 @@ import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Mono;
 
-import static com.heri2go.chat.web.service.session.SessionKey.*;
-
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static com.heri2go.chat.web.service.session.SessionKey.ROOM_KEY_PREFIX;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -58,7 +57,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     private Mono<Void> handleIncomingMessage(WebSocketSession session, String payload) {
         return chatConverter.convertToReq(payload)
                 .flatMap(chatMessage -> {
-                    switch (chatMessage.getType()) {
+                    switch (chatMessage.type()) {
                         case ENTER:
                             return handleEnterMessage(session, chatMessage);
                         case LEAVE:
@@ -66,37 +65,37 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                         case TALK:
                             return handleChatMessage(chatMessage);
                         default:
-                            return Mono.error(new IllegalArgumentException("Unknown message type"));
+                            return Mono.error(new IllegalArgumentException("Unknown content type"));
                     }
                 })
                 .onErrorResume(e -> {
-                    log.error("Error processing message: ", e);
+                    log.error("Error processing content: ", e);
                     return sendErrorMessage(session, "메시지 처리 중 오류가 발생했습니다.");
                 });
     }
 
-    private Mono<Void> handleEnterMessage(WebSocketSession session, ChatMessageReq message) {
+    private Mono<Void> handleEnterMessage(WebSocketSession session, ChatCreateRequest message) {
         return sessionManager.saveSession(session.getId(), 
-                                        message.getRoomNum().toString(), 
-                                        message.getSender())
+                                        message.roomNum().toString(), 
+                                        message.sender())
                 .then(publishMessage(message));
     }
 
-    private Mono<Void> handleLeaveMessage(WebSocketSession session, ChatMessageReq message) {
+    private Mono<Void> handleLeaveMessage(WebSocketSession session, ChatCreateRequest message) {
         return sessionManager.removeSession(session.getId())
                 .then(publishMessage(message));
     }
 
-    private Mono<Void> handleChatMessage(ChatMessageReq message) {
+    private Mono<Void> handleChatMessage(ChatCreateRequest message) {
         return chatService.processMessage(message)
             .flatMap(jsonMessage -> publishMessage(message))
             .then();
     }
 
-    private Mono<Void> publishMessage(ChatMessageReq chatMessage) {
+    private Mono<Void> publishMessage(ChatCreateRequest chatMessage) {
         return chatConverter.convertToJson(chatMessage)
                 .flatMap(message -> redisTemplate.convertAndSend(
-                        ROOM_KEY_PREFIX + chatMessage.getRoomNum(), 
+                        ROOM_KEY_PREFIX + chatMessage.roomNum(), 
                         message))
                 .then();
     }
@@ -114,7 +113,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                     if (session != null && session.isOpen()) {
                         return session.send(Mono.just(session.textMessage(message)))
                                 .onErrorResume(e -> {
-                                    log.error("Failed to send message to session {}: ", sessionId, e);
+                                    log.error("Failed to send content to session {}: ", sessionId, e);
                                     return sessionManager.removeSession(sessionId);
                                 });
                     }
@@ -126,7 +125,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     private Mono<Void> sendErrorMessage(WebSocketSession session, String errorMessage) {
         return session.send(Mono.just(session.textMessage(errorMessage)))
                 .onErrorResume(e -> {
-                    log.error("Error sending error message: ", e);
+                    log.error("Error sending error content: ", e);
                     return Mono.empty();
                 });
     }
