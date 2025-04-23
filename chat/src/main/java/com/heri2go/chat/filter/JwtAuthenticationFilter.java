@@ -13,8 +13,10 @@ import org.springframework.web.server.WebFilterChain;
 
 import com.heri2go.chat.web.service.auth.JwtService;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class JwtAuthenticationFilter implements WebFilter {
@@ -24,30 +26,44 @@ public class JwtAuthenticationFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
-        
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return chain.filter(exchange);
+        return Mono.just(exchange)
+                .flatMap(this::extractToken)
+                .flatMap(token -> authenticateRequest(exchange, chain, token))
+                .switchIfEmpty(chain.filter(exchange));
+    }
+
+    private Mono<String> extractToken(ServerWebExchange exchange) {
+        if (isWebSocketRequest(exchange)) {
+            String token = exchange.getRequest().getQueryParams().getFirst("token");
+            log.info("WebSocket request, token : {}", token);
+            return Mono.justOrEmpty(token);
+        } else {
+            String token = exchange.getRequest().getHeaders().getFirst("Authorization");
+            log.info("HTTP request, token : {}", token);
+            return Mono.justOrEmpty(token)
+                    .filter(header -> header.startsWith("Bearer "))
+                    .map(header -> header.substring(7));
         }
+    }
 
-        String jwt = authHeader.substring(7);
-        String username = jwtService.extractUsername(jwt);
+    private boolean isWebSocketRequest(ServerWebExchange exchange) {
+        String upgradeHeader = exchange.getRequest().getHeaders().getFirst("Upgrade");
+        return upgradeHeader != null && upgradeHeader.equalsIgnoreCase("websocket");
+    }
 
-        if (username != null) {
-            return userDetailsService.findByUsername(username)
-                    .filter(userDetails -> jwtService.validateToken(jwt, username))
-                    .flatMap(userDetails -> {
-                        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
-                        return chain.filter(exchange)
-                                .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
-                    })
-                    .switchIfEmpty(chain.filter(exchange));
-        }
-
-        return chain.filter(exchange);
+    private Mono<Void> authenticateRequest(ServerWebExchange exchange, WebFilterChain chain, String token) {
+        return Mono.justOrEmpty(jwtService.extractUsername(token))
+                .flatMap(username -> userDetailsService.findByUsername(username)
+                        .filter(userDetails -> jwtService.validateToken(token, username))
+                        .flatMap(userDetails -> {
+                            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+                            return chain.filter(exchange)
+                                    .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+                        }))
+                .switchIfEmpty(chain.filter(exchange));
     }
 } 

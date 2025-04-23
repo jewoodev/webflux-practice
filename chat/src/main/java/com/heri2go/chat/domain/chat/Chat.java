@@ -1,5 +1,6 @@
 package com.heri2go.chat.domain.chat;
 
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,7 +12,7 @@ import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Document(collection = "chat")
 public class Chat {
 

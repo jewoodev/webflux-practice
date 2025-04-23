@@ -8,13 +8,17 @@ import org.springframework.stereotype.Service;
 
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.domain.user.UserRepository;
+import com.heri2go.chat.web.exception.DataAccessApiException;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
-public class UserDetailsServiceImpl implements ReactiveUserDetailsService{
+public class UserDetailsServiceImpl implements ReactiveUserDetailsService {
 
     private final UserRepository userRepository;
 
@@ -27,7 +31,8 @@ public class UserDetailsServiceImpl implements ReactiveUserDetailsService{
             ))
             .onErrorMap(e -> {
                 if (e instanceof DataAccessException) {
-                    return new RuntimeException("Database error occurred", e);
+                    log.error("Database access error occurred: ", e);
+                    return new DataAccessApiException("Database access error occurred");
                 }
                 return e;
             });
