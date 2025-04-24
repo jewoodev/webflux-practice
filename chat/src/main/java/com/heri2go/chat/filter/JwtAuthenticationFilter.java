@@ -38,8 +38,8 @@ public class JwtAuthenticationFilter implements WebFilter {
                 !path.startsWith("/css/") && 
                 !path.startsWith("/img/") && 
                 !path.startsWith("/api/auth/") && 
-                !path.startsWith("/login.html") && 
-                !path.startsWith("/register.html") && 
+                !path.startsWith("/login") && 
+                !path.startsWith("/register") && 
                 !path.startsWith("/favicon.ico");
     }
 
@@ -49,8 +49,7 @@ public class JwtAuthenticationFilter implements WebFilter {
             log.info("WebSocket request, token : {}", token);
             return Mono.justOrEmpty(token);
         } else {
-            String token = exchange.getRequest().getQueryParams().getFirst("token") != null ? 
-                exchange.getRequest().getQueryParams().getFirst("token") : exchange.getRequest().getHeaders().getFirst("Authorization");
+            String token = exchange.getRequest().getHeaders().getFirst("Authorization");
             log.info("HTTP request, token : {} / url : {}", token, exchange.getRequest().getURI());
             return Mono.justOrEmpty(token)
                     .filter(header -> header.startsWith("Bearer "))

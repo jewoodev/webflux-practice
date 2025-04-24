@@ -6,8 +6,8 @@ class ChatWebSocket {
         this.ws = null;
     }
 
-    connect() {
-        this.ws = new WebSocket(this.config.endpoints.ws());
+    connect(token) {
+        this.ws = new WebSocket(this.config.endpoints.ws(token));
         this.initializeEventHandlers();
     }
 

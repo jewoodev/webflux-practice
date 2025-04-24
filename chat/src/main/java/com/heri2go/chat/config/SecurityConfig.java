@@ -34,11 +34,11 @@ public class SecurityConfig {
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(form -> form
                         .loginPage("/login.html")
-                        .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/chat.html"))
-                        .authenticationFailureHandler(new RedirectServerAuthenticationFailureHandler("/login.html")))
+                        .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/chat"))
+                        .authenticationFailureHandler(new RedirectServerAuthenticationFailureHandler("/login")))
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/api/auth/**").permitAll()
-                        .pathMatchers("/login.html", "/register.html", "/css/**", "/js/**", "/img/**", "/favicon.ico").permitAll()
+                        .pathMatchers("/login", "/register", "/css/**", "/js/**", "/img/**", "/favicon.ico").permitAll()
                         .anyExchange().authenticated())
                 .authenticationManager(authenticationManager())
                 .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
