@@ -11,6 +11,8 @@ import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.authentication.RedirectServerAuthenticationFailureHandler;
+import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 
 import com.heri2go.chat.filter.JwtAuthenticationFilter;
@@ -30,9 +32,13 @@ public class SecurityConfig {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+                .formLogin(form -> form
+                        .loginPage("/login.html")
+                        .authenticationSuccessHandler(new RedirectServerAuthenticationSuccessHandler("/chat.html"))
+                        .authenticationFailureHandler(new RedirectServerAuthenticationFailureHandler("/login.html")))
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/api/auth/**").permitAll()
-                        .pathMatchers("/login.html", "/register.html", "/css/**", "/js/**", "/img/**").permitAll()
+                        .pathMatchers("/login.html", "/register.html", "/css/**", "/js/**", "/img/**", "/favicon.ico").permitAll()
                         .anyExchange().authenticated())
                 .authenticationManager(authenticationManager())
                 .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
