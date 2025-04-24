@@ -51,7 +51,7 @@ public class SentimentService {
                     .map(response -> {
                         JsonNode documentSentiment = response.get("documentSentiment");
                         double score = documentSentiment.get("score").asDouble();
-                        double magnitude = documentSentiment.get("magnitude").asDouble();
+                        // double magnitude = documentSentiment.get("magnitude").asDouble(); <- 이후 감정값 계산 시 사용 예정, 현재는 단순 값 반환
                         
                         log.debug("Sentiment analysis completed. Score: {}", score);
                         return score;

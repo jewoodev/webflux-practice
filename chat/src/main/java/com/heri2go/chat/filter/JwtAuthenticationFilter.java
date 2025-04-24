@@ -1,7 +1,5 @@
 package com.heri2go.chat.filter;
 
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
@@ -13,6 +11,7 @@ import org.springframework.web.server.WebFilterChain;
 
 import com.heri2go.chat.web.service.auth.JwtService;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
@@ -27,9 +26,21 @@ public class JwtAuthenticationFilter implements WebFilter {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         return Mono.just(exchange)
+                .filter(this::isNotResourceRequest)
                 .flatMap(this::extractToken)
                 .flatMap(token -> authenticateRequest(exchange, chain, token))
                 .switchIfEmpty(chain.filter(exchange));
+    }
+
+    private boolean isNotResourceRequest(ServerWebExchange exchange) {
+        String path = exchange.getRequest().getURI().getPath();
+        return !path.startsWith("/js/") && 
+                !path.startsWith("/css/") && 
+                !path.startsWith("/img/") && 
+                !path.startsWith("/api/auth/") && 
+                !path.startsWith("/login.html") && 
+                !path.startsWith("/register.html") && 
+                !path.startsWith("/favicon.ico");
     }
 
     private Mono<String> extractToken(ServerWebExchange exchange) {
@@ -38,8 +49,9 @@ public class JwtAuthenticationFilter implements WebFilter {
             log.info("WebSocket request, token : {}", token);
             return Mono.justOrEmpty(token);
         } else {
-            String token = exchange.getRequest().getHeaders().getFirst("Authorization");
-            log.info("HTTP request, token : {}", token);
+            String token = exchange.getRequest().getQueryParams().getFirst("token") != null ? 
+                exchange.getRequest().getQueryParams().getFirst("token") : exchange.getRequest().getHeaders().getFirst("Authorization");
+            log.info("HTTP request, token : {} / url : {}", token, exchange.getRequest().getURI());
             return Mono.justOrEmpty(token)
                     .filter(header -> header.startsWith("Bearer "))
                     .map(header -> header.substring(7));
@@ -60,8 +72,7 @@ public class JwtAuthenticationFilter implements WebFilter {
                                     userDetails,
                                     null,
                                     userDetails.getAuthorities()
-                            );
-                            return chain.filter(exchange)
+                            );return chain.filter(exchange)
                                     .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
                         }))
                 .switchIfEmpty(chain.filter(exchange));
