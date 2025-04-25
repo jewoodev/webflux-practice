@@ -18,7 +18,7 @@ class ChatWebSocket {
                 type: 'ENTER',
                 sender: this.config.user.username,
                 roomNum: this.config.user.roomNum,
-                msg: `${this.config.user.username}님이 입장하셨습니다.`,
+                message: `${this.config.user.username}님이 입장하셨습니다.`,
                 lang: this.config.user.lang
             });
             this.messageHandler.fetchChatHistory(this.config.user.roomNum);
@@ -53,7 +53,7 @@ class ChatWebSocket {
             type: 'LEAVE',
             sender: this.config.user.username,
             roomNum: this.config.user.roomNum,
-            msg: `${this.config.user.username}님이 퇴장하셨습니다.`,
+            message: `${this.config.user.username}님이 퇴장하셨습니다.`,
             lang: this.config.user.lang
         });
     }

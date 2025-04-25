@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
     auth = new Auth();
     token = auth.getToken();
     console.log("token = ", token);
-    setTimeout(() => console.log("after 3 seconds"), 3000);
     if (!token) {
         window.location.href = '/login.html';
         return;

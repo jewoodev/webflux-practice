@@ -5,9 +5,14 @@ class ChatMessageHandler {
     }
 
     async fetchChatHistory(roomNum) {
-        const res = await fetch(this.config.endpoints.chatHistory(roomNum));
+        const res = await fetch(this.config.endpoints.chatHistory(roomNum), {
+            headers: {
+                'Authorization': `Bearer ${auth.getToken()}`
+            }
+        });
         const messages = await res.json();
-        messages.forEach(msg => this.handleMessage(msg));
+        console.log("messages are ", message);
+        messages.forEach(message => this.handleMessage(message));
     }
 
     handleMessage(chat) {
@@ -30,7 +35,7 @@ class ChatMessageHandler {
     renderSystemMessage(chat) {
         const template = `
             <div class="system_msg_content">
-                <p>${chat.msg}</p>
+                <p>${chat.message}</p>
                 <span class="time_date">${this.formatTime(chat.createdAt)}</span>
             </div>
         `;
@@ -40,7 +45,7 @@ class ChatMessageHandler {
     renderMyMessage(chat) {
         const template = `
             <div class="sent_msg">
-                <p>${chat.msg}</p>
+                <p>${chat.message}</p>
                 <span class="time_date">${this.formatTime(chat.createdAt)} / ${chat.sender}</span>
             </div>
         `;
@@ -50,7 +55,7 @@ class ChatMessageHandler {
     renderOtherMessage(chat) {
         const template = `
             <div class="received_withd_msg">
-                <p>${chat.msg}</p>
+                <p>${chat.message}</p>
                 <span class="time_date">${this.formatTime(chat.createdAt)} / ${chat.sender}</span>
             </div>
         `;
