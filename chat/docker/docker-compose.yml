@@ -1,7 +1,7 @@
 services:
   mongodb:
     image: mongodb/mongodb-community-server:latest
-    container_name: mongodb_boot
+    container_name: mongodb
     restart: always
     ports:
       - 27017:27017
@@ -11,8 +11,7 @@ services:
 
   redis:
     image: redis:latest
-    container_name: redis_boot
-    command: [ "redis-server" ]
+    container_name: redis
     hostname: redis
     volumes:
       - ./redis_data:/data
@@ -20,15 +19,12 @@ services:
       - "6379:6379"
 
   redis-insight:
-    image: redislabs/redisinsight:latest
+    image: redis/redisinsight:latest
     container_name: redis_insight
     restart: always
     ports:
       - "5540:5540"
-    environment:
-      - REDISINSIGHT_HOST=0.0.0.0
-      - REDISINSIGHT_PORT=8001
     volumes:
-      - ./redis_data:/db
+      - ./redis_insight_data:/data
     depends_on:
       - redis

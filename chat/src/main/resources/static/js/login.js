@@ -22,8 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const data = await response.json();
                     // 토큰 저장
                     auth.setToken(data.token);
+                    auth.setUsername(username);
                     // 토큰을 헤더에 포함시켜 채팅 페이지로 이동
-                    navigateWithToken('/chat', auth.TOKEN_KEY);
+                    window.location.href = '/chat';
                 } else {
                     auth.showError('Login failed');
                 }

@@ -20,60 +20,48 @@ import reactor.core.publisher.Mono;
 @Component
 public class JwtAuthenticationFilter implements WebFilter {
 
-    private final JwtService jwtService;
-    private final ReactiveUserDetailsService userDetailsService;
+        private final JwtService jwtService;
+        private final ReactiveUserDetailsService userDetailsService;
 
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        return Mono.just(exchange)
-                .filter(this::isNotResourceRequest)
-                .flatMap(this::extractToken)
-                .flatMap(token -> authenticateRequest(exchange, chain, token))
-                .switchIfEmpty(chain.filter(exchange));
-    }
-
-    private boolean isNotResourceRequest(ServerWebExchange exchange) {
-        String path = exchange.getRequest().getURI().getPath();
-        return !path.startsWith("/js/") && 
-                !path.startsWith("/css/") && 
-                !path.startsWith("/img/") && 
-                !path.startsWith("/api/auth/") && 
-                !path.startsWith("/login") && 
-                !path.startsWith("/register") && 
-                !path.startsWith("/favicon.ico");
-    }
-
-    private Mono<String> extractToken(ServerWebExchange exchange) {
-        if (isWebSocketRequest(exchange)) {
-            String token = exchange.getRequest().getQueryParams().getFirst("token");
-            log.info("WebSocket request, token : {}", token);
-            return Mono.justOrEmpty(token);
-        } else {
-            String token = exchange.getRequest().getHeaders().getFirst("Authorization");
-            log.info("HTTP request, token : {} / url : {}", token, exchange.getRequest().getURI());
-            return Mono.justOrEmpty(token)
-                    .filter(header -> header.startsWith("Bearer "))
-                    .map(header -> header.substring(7));
+        @Override
+        public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+                return Mono.just(exchange)
+                                .filter(this::checkExceptionPath)
+                                .flatMap(this::extractToken)
+                                .flatMap(token -> authenticateRequest(exchange, chain, token))
+                                .switchIfEmpty(chain.filter(exchange));
         }
-    }
 
-    private boolean isWebSocketRequest(ServerWebExchange exchange) {
-        String upgradeHeader = exchange.getRequest().getHeaders().getFirst("Upgrade");
-        return upgradeHeader != null && upgradeHeader.equalsIgnoreCase("websocket");
-    }
+        private boolean checkExceptionPath(ServerWebExchange exchange) {
+                String path = exchange.getRequest().getURI().getPath();
+                return !path.startsWith("/js/") &&
+                                !path.startsWith("/css/") &&
+                                !path.startsWith("/img/") &&
+                                !path.startsWith("/api/auth/") &&
+                                !path.startsWith("/login") &&
+                                !path.startsWith("/register") &&
+                                !path.startsWith("/favicon.ico") &&
+                                !path.startsWith("/ws");
+        }
 
-    private Mono<Void> authenticateRequest(ServerWebExchange exchange, WebFilterChain chain, String token) {
-        return Mono.justOrEmpty(jwtService.extractUsername(token))
-                .flatMap(username -> userDetailsService.findByUsername(username)
-                        .filter(userDetails -> jwtService.validateToken(token, username))
-                        .flatMap(userDetails -> {
-                            Authentication authentication = new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );return chain.filter(exchange)
-                                    .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
-                        }))
-                .switchIfEmpty(chain.filter(exchange));
-    }
-} 
+        private Mono<String> extractToken(ServerWebExchange exchange) {
+                String token = exchange.getRequest().getHeaders().getFirst("Authorization");
+                log.info("HTTP request, token : {} / url : {}", token, exchange.getRequest().getURI());
+                return Mono.justOrEmpty(token)
+                                .filter(header -> header.startsWith("Bearer "))
+                                .map(header -> header.substring(7));
+        }
+
+        private Mono<Void> authenticateRequest(ServerWebExchange exchange, WebFilterChain chain, String token) {
+                return Mono.justOrEmpty(jwtService.extractUsername(token))
+                                .flatMap(username -> userDetailsService.findByUsername(username)
+                                .filter(userDetails -> jwtService.validateToken(token, username))
+                                .flatMap(userDetails -> {
+                                                Authentication authentication =
+                                                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                                                return chain.filter(exchange)
+                                                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
+                                                }))
+                                .switchIfEmpty(chain.filter(exchange));
+        }
+}
