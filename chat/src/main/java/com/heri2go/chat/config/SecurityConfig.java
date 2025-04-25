@@ -1,5 +1,7 @@
 package com.heri2go.chat.config;
 
+import com.heri2go.chat.filter.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
@@ -15,10 +17,6 @@ import org.springframework.security.web.server.authentication.RedirectServerAuth
 import org.springframework.security.web.server.authentication.RedirectServerAuthenticationSuccessHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 
-import com.heri2go.chat.filter.JwtAuthenticationFilter;
-
-import lombok.RequiredArgsConstructor;
-
 @RequiredArgsConstructor
 @Configuration
 @EnableWebFluxSecurity
@@ -29,6 +27,7 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
@@ -39,6 +38,7 @@ public class SecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/api/auth/**").permitAll()
                         .pathMatchers("/login", "/register", "/css/**", "/js/**", "/img/**", "/favicon.ico").permitAll()
+                        .pathMatchers("/ws**").permitAll()
                         .anyExchange().authenticated())
                 .authenticationManager(authenticationManager())
                 .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)

@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -20,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 public class JwtService {
 
     private final SecretKey secretKey;
-
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
@@ -37,7 +35,7 @@ public class JwtService {
                 .compact();
     }
 
-    public Boolean validateToken(String token, String username) {
+    public boolean validateToken(String token, String username) {
         final String tokenUsername = extractUsername(token);
         return (tokenUsername.equals(username) && !isTokenExpired(token));
     }
