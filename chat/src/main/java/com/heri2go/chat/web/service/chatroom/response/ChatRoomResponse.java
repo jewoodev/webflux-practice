@@ -14,7 +14,7 @@ public record ChatRoomResponse(
         String lastSender,
         LocalDateTime lastMessageTime
 ) {
-    public static ChatRoomResponse fromEntity(ChatRoom chatRoom) {
+    public static ChatRoomResponse from(ChatRoom chatRoom) {
         return ChatRoomResponse.builder()
                 .roomName(chatRoom.getRoomName())
                 .participantIds(chatRoom.getParticipantIds())

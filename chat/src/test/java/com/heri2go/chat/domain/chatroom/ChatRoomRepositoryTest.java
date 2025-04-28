@@ -58,7 +58,7 @@ class ChatRoomRepositoryTest extends MongoTestSupport {
     void findByParticipantsContaining() {
         // given // when -> setUp()
         String userId = "user1";
-        Flux<ChatRoom> chatRoomFlux = chatRoomParticipantRepository.findByUsername(userId)
+        Flux<ChatRoom> chatRoomFlux = chatRoomParticipantRepository.findAllByUsername(userId)
                                                 .flatMap(chatRoomParticipant -> chatRoomRepository.findById(chatRoomParticipant.getChatRoomId()
                                         ));
 

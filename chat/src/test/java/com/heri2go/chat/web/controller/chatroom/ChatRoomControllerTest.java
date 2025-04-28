@@ -51,7 +51,7 @@ class ChatRoomControllerTest extends MockTestSupport {
                         .role(Role.LAB)
                         .build());
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                testUser, null, testUser.getAuthorities());
+                TEST_USERNAME, null, testUser.getAuthorities());
 
         // when
         when(chatRoomService.getOwnChatRoomResponse(any(UserDetailsImpl.class)))
