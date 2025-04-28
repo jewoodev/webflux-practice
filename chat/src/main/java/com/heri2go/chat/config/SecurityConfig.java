@@ -38,7 +38,6 @@ public class SecurityConfig {
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/api/auth/**").permitAll()
                         .pathMatchers("/login", "/register", "/css/**", "/js/**", "/img/**", "/favicon.ico").permitAll()
-                        .pathMatchers("/ws**").permitAll()
                         .anyExchange().authenticated())
                 .authenticationManager(authenticationManager())
                 .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
