@@ -36,7 +36,7 @@ class ChatRoomServiceTest extends MockTestSupport {
     ChatRoomService chatRoomService;
 
     private static final String TEST_USERNAME = "user2";
-    private final LocalDateTime now = LocalDateTime.now();
+    private final LocalDateTime NOW = LocalDateTime.now();
 
     @DisplayName("유저는 본인의 인증 정보를 통해 자신이 참여 중인 채팅방의 정보를 조회할 수 있다.")
     @Test
@@ -58,7 +58,7 @@ class ChatRoomServiceTest extends MockTestSupport {
                 .participantIds(Set.of("user1", "user2"))
                 .lastMessage("last message")
                 .lastSender("last sender")
-                .lastMessageTime(now.minusHours(1))
+                .lastMessageTime(NOW.minusHours(1))
                 .build();
 
         // createRequest1 으로 생성한 chatRoom1
@@ -70,7 +70,7 @@ class ChatRoomServiceTest extends MockTestSupport {
                 .participantIds(Set.of("user1", "user2"))
                 .lastMessage("last message")
                 .lastSender("last sender")
-                .lastMessageTime(now.minusHours(1))
+                .lastMessageTime(NOW.minusHours(1))
                 .build();
 
         ChatRoomResponse chatRoomResponse2 = ChatRoomResponse.builder()
@@ -78,7 +78,7 @@ class ChatRoomServiceTest extends MockTestSupport {
                 .participantIds(Set.of("user1", "user3"))
                 .lastMessage("last message 2")
                 .lastSender("last sender 2")
-                .lastMessageTime(now.minusHours(2))
+                .lastMessageTime(NOW.minusHours(2))
                 .build();
 
         // when, 유저의 인증 정보를 기반으로 참여 중인 채팅방 식별자를 읽어들이고, 그 식별자를 통해 채팅방 정보를 가져오는 흐름

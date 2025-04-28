@@ -14,7 +14,7 @@ import java.util.Set;
 
 class ChatRoomRepositoryTest extends MongoTestSupport {
 
-    private LocalDateTime now = LocalDateTime.now();
+    private LocalDateTime NOW = LocalDateTime.now();
 
     @AfterEach
     void tearDown() {
@@ -33,7 +33,7 @@ class ChatRoomRepositoryTest extends MongoTestSupport {
                 .participantIds(Set.of("user1", "user2"))
                 .lastMessage("testMessage")
                 .lastSender("user1")
-                .lastMessageTime(now.minusHours(1))
+                .lastMessageTime(NOW.minusHours(1))
                 .build();
 
         chatRoom = chatRoomRepository.save(chatRoom).block();
@@ -41,13 +41,13 @@ class ChatRoomRepositoryTest extends MongoTestSupport {
         ChatRoomParticipant chatRoomParticipant = ChatRoomParticipant.builder()
                 .username("user1")
                 .chatRoomId(chatRoom.getId())
-                .joinedAt(now.minusHours(1))
+                .joinedAt(NOW.minusHours(1))
                 .build();
 
         ChatRoomParticipant chatRoomParticipant2 = ChatRoomParticipant.builder()
                 .username("user2")
                 .chatRoomId(chatRoom.getId())
-                .joinedAt(now.minusHours(3))
+                .joinedAt(NOW.minusHours(3))
                 .build();
 
         chatRoomParticipantRepository.saveAll(Flux.just(chatRoomParticipant, chatRoomParticipant2)).blockLast();
@@ -70,7 +70,7 @@ class ChatRoomRepositoryTest extends MongoTestSupport {
                         chatRoom.getLastMessage().equals("testMessage") &&
                         chatRoom.getLastSender().equals("user1") &&
                         chatRoom.getLastMessageTime().truncatedTo(ChronoUnit.SECONDS)
-                                .isEqual(now.minusHours(1).truncatedTo(ChronoUnit.SECONDS))
+                                .isEqual(NOW.minusHours(1).truncatedTo(ChronoUnit.SECONDS))
                     )
                     .verifyComplete();
     }

@@ -17,16 +17,12 @@ import reactor.test.StepVerifier;
 import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 class ChatServiceTest extends MockTestSupport {
 
         @Mock
         private ChatRepository chatRepository;
-
-        @Mock
-        private SentimentService sentimentService;
 
         @InjectMocks
         private ChatService chatService;
@@ -56,14 +52,11 @@ class ChatServiceTest extends MockTestSupport {
         @DisplayName("메세지를 저장하면 정상적으로 응답 Dto를 돌려받는다.")
         @Test
         void save_shouldReturnChatMessageResp() {
-                // Given
+                // Given // When
                 when(chatRepository.save(any(Chat.class))).thenReturn(Mono.just(sampleChat));
-                when(sentimentService.analyzeSentiment(anyString())).thenReturn(Mono.just(0.5));
-                // When
-                Mono<ChatResponse> result = chatService.save(sampleReq);
 
                 // Then
-                StepVerifier.create(result)
+                StepVerifier.create(chatService.save(sampleReq))
                                 .expectNextMatches(resp -> resp.roomNum().equals(sampleReq.roomNum()) &&
                                                 resp.sender().equals(sampleReq.sender()) &&
                                                 resp.content().equals(sampleReq.content()))
