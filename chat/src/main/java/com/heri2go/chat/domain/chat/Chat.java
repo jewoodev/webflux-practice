@@ -1,19 +1,18 @@
 package com.heri2go.chat.domain.chat;
 
+import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
 import lombok.AccessLevel;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
-
 import java.time.LocalDateTime;
 
-@Data
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Document(collection = "chat")
+@Document
 public class Chat {
 
     @Id

@@ -1,19 +1,5 @@
 package com.heri2go.chat.web.service.chat;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import com.heri2go.chat.domain.user.Role;
 import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserRepository;
@@ -23,9 +9,21 @@ import com.heri2go.chat.web.exception.DuplicatedUsernameException;
 import com.heri2go.chat.web.service.auth.AuthService;
 import com.heri2go.chat.web.service.auth.JwtService;
 import com.heri2go.chat.web.service.auth.response.UserResponse;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -86,7 +84,7 @@ class AuthServiceTest {
                     .verifyComplete();
     }
 
-    @DisplayName("회원가입 시 유저가 이미 사용중인 아이디인 경우 예외가 발생한다.")
+    @DisplayName("회원가입 시 유저가 이미 사용중인 아이디로 요청할 경우 예외가 발생한다.")
     @Test
     void register_WhenUsernameExists_ShouldThrowError() {
         // Given
