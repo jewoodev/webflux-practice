@@ -18,7 +18,7 @@ public class ChatRoomController {
     private final ChatRoomService chatRoomService;
 
     @GetMapping("/info")
-    public Flux<ChatRoomResponse> getOwnChatRoomResponse(@AuthenticationPrincipal UserDetailsImpl userDetails) {
+    public Flux<ChatRoomResponse> getOwnChatRoomInfo(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         return chatRoomService.getOwnChatRoomResponse(userDetails);
     }
 }

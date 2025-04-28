@@ -35,7 +35,7 @@ public class Chat {
         this.createdAt = createdAt;
     }
 
-    public static Chat fromReq(ChatCreateRequest req) { // 메세지 Request 로부터 최초로 생성하는 Chat
+    public static Chat from(ChatCreateRequest req) { // 메세지 Request 로부터 최초로 생성하는 Chat
         return Chat.builder()
                 .content(req.content())
                 .sender(req.sender())
