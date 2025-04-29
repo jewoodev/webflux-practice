@@ -1,19 +1,16 @@
 package com.heri2go.chat.filter;
 
+import com.heri2go.chat.web.exception.InvalidJwtTokenException;
+import com.heri2go.chat.web.service.auth.JwtService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
-
-import com.heri2go.chat.web.exception.InvalidJwtTokenException;
-import com.heri2go.chat.web.service.auth.JwtService;
-
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -26,47 +23,50 @@ public class JwtAuthenticationFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        return Mono.just(exchange)
-                .filter(this::checkExceptionPath)
-                .flatMap(this::extractToken)
-                .flatMap(token -> authenticateRequest(exchange, chain, token))
-                .onErrorResume(InvalidJwtTokenException.class, e -> {
-                    log.error("Authentication failed: {}", e.getMessage());
-                    return chain.filter(exchange);
-                })
-                .switchIfEmpty(chain.filter(exchange));
+        return Mono.defer(() -> {
+            if (checkExceptionPath(exchange)) {
+                return chain.filter(exchange);
+            }
+            return extractToken(exchange)
+                    .flatMap(token -> {
+                        String username = jwtService.extractUsername(token);
+                        return authenticateToken(exchange, chain, token, username);
+                    })
+                    .onErrorResume(InvalidJwtTokenException.class, e -> {
+                        log.error("Authentication failed: {}", e.getMessage());
+                        return chain.filter(exchange);
+                    });
+        });
     }
 
     private boolean checkExceptionPath(ServerWebExchange exchange) {
         String path = exchange.getRequest().getURI().getPath();
-        return !path.startsWith("/js/") &&
-                !path.startsWith("/css/") &&
-                !path.startsWith("/img/") &&
-                !path.startsWith("/api/auth/") &&
-                !path.startsWith("/login") &&
-                !path.startsWith("/register") &&
-                !path.startsWith("/favicon.ico");
+        return path.startsWith("/js/") ||
+                path.startsWith("/css/") ||
+                path.startsWith("/img/") ||
+                path.startsWith("/api/auth/") ||
+                path.startsWith("/login") ||
+                path.startsWith("/register") ||
+                path.startsWith("/favicon.ico");
     }
 
     private Mono<String> extractToken(ServerWebExchange exchange) {
         String token = exchange.getRequest().getHeaders().getFirst("Authorization");
-        log.info("HTTP request, token : {} / url : {}", token, exchange.getRequest().getURI());
         return Mono.justOrEmpty(token)
                 .filter(header -> header.startsWith("Bearer "))
-                .map(header -> header.substring(7));
+                .map(header -> header.substring(7))
+                .switchIfEmpty(Mono.error(new InvalidJwtTokenException("Invalid token")));
     }
 
-    private Mono<Void> authenticateRequest(ServerWebExchange exchange, WebFilterChain chain, String token) {
-        return Mono.justOrEmpty(jwtService.extractUsername(token))
-                .flatMap(username -> userDetailsService.findByUsername(username)
-                        .filter(userDetails -> jwtService.validateToken(token, username))
-                        .switchIfEmpty(Mono.error(new InvalidJwtTokenException("Invalid token")))
-                        .flatMap(userDetails -> {
-                            log.info("Authentication success: {}", userDetails.getUsername());
-                            Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
-                                    userDetails.getAuthorities());
-                            return chain.filter(exchange)
-                                    .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication));
-                        }));
+    private Mono<Void> authenticateToken(ServerWebExchange exchange, WebFilterChain chain, String token, String username) {
+        return userDetailsService.findByUsername(username)
+                .filter(userDetails -> jwtService.validateToken(token, username))
+                .switchIfEmpty(Mono.error(new InvalidJwtTokenException("Invalid token")))
+                .map(userDetails -> new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities()
+                ))
+                .flatMap(authentication -> chain.filter(exchange)
+                        .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication))
+                );
     }
 }
