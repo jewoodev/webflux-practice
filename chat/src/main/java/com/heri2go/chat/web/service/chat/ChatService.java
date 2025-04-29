@@ -22,7 +22,7 @@ public class ChatService {
     private final ChatConverter chatConverter;
 
     public Mono<ChatResponse> save(ChatCreateRequest req) {
-        return chatRepository.save(Chat.fromReq(req))
+        return chatRepository.save(Chat.from(req))
                 .map(ChatResponse::fromEntity);
     }
 

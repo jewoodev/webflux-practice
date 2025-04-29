@@ -1,11 +1,9 @@
 package com.heri2go.chat.domain.chat;
 
-import org.junit.jupiter.api.BeforeEach;
+import com.heri2go.chat.MongoTestSupport;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import com.heri2go.chat.MongoTestSupport;
-
 import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
@@ -14,9 +12,8 @@ import java.util.Arrays;
 
 class ChatRepositoryTest extends MongoTestSupport {
     
-    @BeforeEach
-    public void setup() {
-        // 테스트 전에 컬렉션을 비웁니다
+    @AfterEach
+    public void tearDown() {
         reactiveMongoTemplate.dropCollection(Chat.class)
                 .then(reactiveMongoTemplate.createCollection(Chat.class))
                 .block();

@@ -2,7 +2,6 @@ package com.heri2go.chat.web.controller.chat;
 
 import com.heri2go.chat.MockTestSupport;
 import com.heri2go.chat.web.service.chat.ChatService;
-import com.heri2go.chat.web.service.chat.TranslateService;
 import com.heri2go.chat.web.service.chat.response.ChatResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,20 +18,17 @@ import static org.mockito.Mockito.when;
 
 class ChatControllerTest extends MockTestSupport {
 
+    private WebTestClient webTestClient;
+
     @Mock
     private ChatService chatService;
 
-    @Mock
-    private TranslateService translateService;
-
     @InjectMocks
-    private ChatController chatController;
-
-    private WebTestClient webTestClient;
+    private ChatRestController chatRestController;
 
     @BeforeEach
     void setUp() {
-        webTestClient = WebTestClient.bindToController(chatController).build();
+        webTestClient = WebTestClient.bindToController(chatRestController).build();
     }
 
     @DisplayName("방 번호에 알맞은 메세지들을 제공한다.")

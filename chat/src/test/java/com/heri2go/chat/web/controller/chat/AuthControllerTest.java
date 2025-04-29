@@ -1,8 +1,13 @@
 package com.heri2go.chat.web.controller.chat;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
+import com.heri2go.chat.MockTestSupport;
+import com.heri2go.chat.domain.user.Role;
+import com.heri2go.chat.domain.user.User;
+import com.heri2go.chat.web.controller.auth.AuthController;
+import com.heri2go.chat.web.controller.auth.request.UserLoginRequest;
+import com.heri2go.chat.web.controller.auth.request.UserRegisterRequest;
+import com.heri2go.chat.web.service.auth.AuthService;
+import com.heri2go.chat.web.service.auth.response.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,18 +16,10 @@ import org.mockito.Mock;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.web.reactive.server.WebTestClient;
-
-import com.heri2go.chat.MockTestSupport;
-import com.heri2go.chat.domain.user.Role;
-import com.heri2go.chat.domain.user.User;
-import com.heri2go.chat.web.controller.auth.AuthController;
-import com.heri2go.chat.web.controller.auth.request.UserLoginRequest;
-import com.heri2go.chat.web.controller.auth.request.UserRegisterRequest;
-import com.heri2go.chat.web.service.auth.AuthService;
-import com.heri2go.chat.web.service.auth.JwtService;
-import com.heri2go.chat.web.service.auth.response.UserResponse;
-
 import reactor.core.publisher.Mono;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 class AuthControllerTest extends MockTestSupport {
 
@@ -30,9 +27,6 @@ class AuthControllerTest extends MockTestSupport {
 
     @Mock
     private AuthService authService;
-
-    @Mock
-    private JwtService jwtService;
 
     @InjectMocks
     private AuthController authController;
