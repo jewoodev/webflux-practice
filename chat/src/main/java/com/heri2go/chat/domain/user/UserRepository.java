@@ -6,7 +6,7 @@ import reactor.core.publisher.Mono;
 
 public interface UserRepository extends ReactiveMongoRepository<User, String> {
 
-    @Cacheable(value = "user", key = "#username", cacheManager = "cacheManager")
+    @Cacheable(value = "user", key = "#p0", cacheManager = "cacheManager", unless = "#result == null")
     Mono<User> findByUsername(String username);
 
     Mono<User> findByEmail(String email);
