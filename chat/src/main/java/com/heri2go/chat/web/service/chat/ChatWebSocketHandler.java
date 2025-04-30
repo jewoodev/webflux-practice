@@ -1,22 +1,25 @@
 package com.heri2go.chat.web.service.chat;
 
-import com.heri2go.chat.util.chat.ChatConverter;
-import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
-import com.heri2go.chat.web.service.session.RedisSessionManager;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import static com.heri2go.chat.web.service.session.ConnectInfoProvider.SERVER_ID;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
+
+import com.heri2go.chat.util.chat.ChatConverter;
+import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
+import com.heri2go.chat.web.service.session.ConnectInfoProvider;
+import com.heri2go.chat.web.service.session.RedisSessionManager;
+
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static com.heri2go.chat.web.service.session.SessionKey.ROOM_KEY_PREFIX;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -26,16 +29,17 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     private final RedisSessionManager sessionManager;
     private final ChatConverter chatConverter;
     private final ReactiveRedisTemplate<String, String> redisTemplate;
+    private final ConnectInfoProvider cip;
 
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void initSubscription() {
-        redisTemplate.listenToPattern(ROOM_KEY_PREFIX + "*")
+        redisTemplate.listenToPattern(cip.getRoomKey("*"))
                 .doOnError(error -> log.error("Redis subscription error: ", error))
                 .flatMap(message -> {
                     String channel = message.getChannel();
-                    Long roomNum = Long.valueOf(channel.substring(ROOM_KEY_PREFIX.length()));
+                    Long roomNum = Long.valueOf(channel.substring(SERVER_ID.length() + 1));
                     return broadcastToRoom(roomNum, message.getMessage());
                 })
                 .subscribe();
@@ -95,8 +99,10 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     private Mono<Void> publishMessage(ChatCreateRequest chatMessage) {
         return chatConverter.convertToJson(chatMessage)
                 .flatMap(message -> redisTemplate.convertAndSend(
-                        ROOM_KEY_PREFIX + chatMessage.roomNum(),
-                        message))
+                            cip.getRoomKey(chatMessage.roomNum().toString()),
+                            message
+                        )
+                )
                 .then();
     }
 

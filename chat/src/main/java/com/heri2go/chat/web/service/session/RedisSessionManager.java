@@ -5,7 +5,6 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import static com.heri2go.chat.web.service.session.SessionKey.*;
 
 import java.time.Duration;
 import java.util.Map;
@@ -16,12 +15,13 @@ import java.util.Map;
 public class RedisSessionManager {
 
     private final ReactiveRedisTemplate<String, String> redisTemplate;
-    
+    private final ConnectInfoProvider cip;
+
     private static final Duration SESSION_TTL = Duration.ofHours(1);
 
     public Mono<Void> saveSession(String sessionId, String roomId, String username) {
-        String sessionKey = SESSION_KEY_PREFIX + sessionId;
-        String roomKey = ROOM_KEY_PREFIX + roomId;
+        String sessionKey = cip.getSessionKey(sessionId);
+        String roomKey = cip.getRoomKey(roomId);
 
         return redisTemplate.opsForHash().putAll(sessionKey, Map.of(
                         "roomId", roomId,
@@ -33,23 +33,28 @@ public class RedisSessionManager {
                 .then();
     }
 
+    public Flux<String> getRoomSessionsInServer(String roomId) {
+        return redisTemplate.opsForHash().entries(cip.getRoomKey(roomId))
+                .filter(entry -> entry.getValue().equals(roomId))
+                .map(entry -> entry.getKey().toString());
+    }
+
     public Mono<Void> removeSession(String sessionId) {
         return getSessionInfo(sessionId)
-                .flatMap(sessionInfo -> {
-                    String roomKey = ROOM_KEY_PREFIX + sessionInfo.get("roomId");
-                    return redisTemplate.opsForSet().remove(roomKey, sessionId)
-                            .then(redisTemplate.delete(SESSION_KEY_PREFIX + sessionId));
-                })
+                .flatMap(sessionInfo ->
+                        redisTemplate.opsForSet().remove(cip.getRoomKey(sessionInfo.get("roomId")), sessionId)
+                            .then(redisTemplate.delete(cip.getSessionKey(sessionId)))
+                )
                 .then();
     }
 
     public Mono<Map<String, String>> getSessionInfo(String sessionId) {
-        return redisTemplate.opsForHash().entries(SESSION_KEY_PREFIX + sessionId)
+        return redisTemplate.opsForHash().entries(cip.getSessionKey(sessionId))
                 .collectMap(entry -> entry.getKey().toString(),
                         entry -> entry.getValue().toString());
     }
 
     public Flux<String> getRoomSessions(String roomId) {
-        return redisTemplate.opsForSet().members(ROOM_KEY_PREFIX + roomId);
+        return redisTemplate.opsForSet().members(cip.getRoomKey(roomId));
     }
 }
