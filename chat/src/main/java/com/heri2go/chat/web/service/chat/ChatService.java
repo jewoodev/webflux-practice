@@ -32,17 +32,18 @@ public class ChatService {
     }
 
     public Mono<String> processMessage(ChatCreateRequest req) {
-        if (req.content() == null || req.content().isEmpty()) {
-            log.error("메세지 내용이 비어있어 에러 발생");
-            return Mono.error(new MessageInvalidException("메세지 내용이 비어있어 에러 발생"));
-        }
+        return Mono.defer(() -> {
+            if (req.content() == null || req.content().isEmpty()) {
+                log.error("메세지 내용이 비어있어 에러 발생");
+                return Mono.error(new MessageInvalidException("메세지 내용이 비어있어 에러 발생"));
+            }
 
-        // 비즈니스 로직: 메시지 저장
-        return save(req)
-                .flatMap(chatMessageResp -> chatConverter.convertToJson(chatMessageResp))
-                .onErrorResume(JsonProcessingException.class, e -> {
-                    log.error("메세지 저장 후 응답 Dto로 변환 중 에러 발생: ", e);
-                    return Mono.error(new JsonConvertException("메세지 저장 후 응답 Dto로 변환 중 에러 발생"));
-                });
+            return this.save(req)
+                    .flatMap(chatConverter::convertToJson)
+                    .onErrorResume(JsonProcessingException.class, e -> {
+                        log.error("메세지 저장 후 응답 Dto로 변환 중 에러 발생: ", e);
+                        return Mono.error(new JsonConvertException("메세지 저장 후 응답 Dto로 변환 중 에러 발생"));
+                    });
+        });
     }
 }
