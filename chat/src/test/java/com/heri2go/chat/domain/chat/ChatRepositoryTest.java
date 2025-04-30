@@ -21,7 +21,7 @@ class ChatRepositoryTest extends MongoTestSupport {
 
     @DisplayName("방 번호에 알맞은 메시지들을 제공한다.")
     @Test
-    public void testFindByRoomNumOrderByCreatedAt() {
+    public void canGetChatMessagesByRoomNum() {
         // 테스트 데이터 준비
         LocalDateTime now = LocalDateTime.now();
 

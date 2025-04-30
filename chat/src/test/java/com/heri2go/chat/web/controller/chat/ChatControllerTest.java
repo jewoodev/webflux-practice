@@ -33,7 +33,7 @@ class ChatControllerTest extends MockTestSupport {
 
     @DisplayName("방 번호에 알맞은 메세지들을 제공한다.")
     @Test
-    void getChatHistory_shouldReturnChatMessages() {
+    void canGetChatMessagesByRoomNum() {
         // given
         Long roomNum = 1L;
         ChatResponse message1 = ChatResponse.builder()

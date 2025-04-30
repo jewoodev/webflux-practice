@@ -43,7 +43,7 @@ class ChatRoomControllerTest extends MockTestSupport {
 
     @DisplayName("각 사용자는 자신이 참여 중인 채팅방에 대한 정보들을 조회할 수 있다.")
     @Test
-    void test() {
+    void userCanGetChatRoomInfoThroughAuthentication() {
         // given
         UserDetailsImpl testUser = new UserDetailsImpl(
                 User.builder()

@@ -49,9 +49,9 @@ class ChatServiceTest extends MockTestSupport {
                                 .build();
         }
 
-        @DisplayName("메세지를 저장하면 정상적으로 응답 Dto를 돌려받는다.")
+        @DisplayName("정상적인 메세지를 저장하면 정상적으로 응답 Dto를 돌려받는다.")
         @Test
-        void save_shouldReturnChatMessageResp() {
+        void save_validMessage_shouldReturnChatMessageResp() {
                 // Given // When
                 when(chatRepository.save(any(Chat.class))).thenReturn(Mono.just(sampleChat));
 
@@ -63,9 +63,9 @@ class ChatServiceTest extends MockTestSupport {
                                 .verifyComplete();
         }
 
-        @DisplayName("채팅방 번호로 조회되는 채팅들이 정상적으로 조회된다.")
+        @DisplayName("유효한 채팅방 번호로 조회되는 채팅들이 정상적으로 조회된다.")
         @Test
-        void getByRoomNum_shouldReturnChatMessageRespFlux() {
+        void getByRoomNum_validRoomNum_shouldReturnChatMessageRespFlux() {
                 // Given
                 when(chatRepository.findByRoomNumOrderByCreatedAt(101L))
                                 .thenReturn(Flux.just(sampleChat));

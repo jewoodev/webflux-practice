@@ -1,8 +1,5 @@
 package com.heri2go.chat.web.util;
 
-import java.util.Collections;
-
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.heri2go.chat.domain.user.Role;
 import com.heri2go.chat.domain.user.User;

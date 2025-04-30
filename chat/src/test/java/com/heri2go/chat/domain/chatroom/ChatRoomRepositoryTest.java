@@ -55,7 +55,7 @@ class ChatRoomRepositoryTest extends MongoTestSupport {
 
     @DisplayName("유저는 자신이 참여 중인 채팅방 목록과 채팅방 정보를 조회할 수 있다.")
     @Test
-    void findByParticipantsContaining() {
+    void userCanGetChatRoomInfoThroughAuthentication() {
         // given // when -> setUp()
         String userId = "user1";
         Flux<ChatRoom> chatRoomFlux = chatRoomParticipantRepository.findAllByUsername(userId)
