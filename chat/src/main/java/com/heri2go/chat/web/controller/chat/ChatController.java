@@ -1,24 +1,27 @@
 package com.heri2go.chat.web.controller.chat;
 
-import org.springframework.stereotype.Controller;
+import com.heri2go.chat.domain.user.UserDetailsImpl;
+import com.heri2go.chat.web.service.chat.ChatService;
+import com.heri2go.chat.web.service.chat.response.ChatResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import reactor.core.publisher.Mono;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
 
-@Controller
+@RequiredArgsConstructor
+@RequestMapping("/api/chat")
+@RestController
 public class ChatController {
 
-    @GetMapping("/chat")
-    public Mono<String> getChatHtml() {
-        return Mono.just("chat");
-    }
+    private final ChatService chatService;
 
-    @GetMapping("/login")
-    public Mono<String> getLoginHtml() {
-        return Mono.just("login");
-    }
-
-    @GetMapping("/register")
-    public Mono<String> getRegisterHtml() {
-        return Mono.just("register");
+    @GetMapping("/{roomName}") // 채팅 기록을 가져올 때 채팅방에 초대되어 있는 유저가 아니면 실패한다.
+    public Flux<ChatResponse> getChatHistory(@PathVariable("roomName") String roomId,
+                                             @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        return chatService.getByRoomIdToInvited(roomId, userDetails);
     }
 }
