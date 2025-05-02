@@ -1,6 +1,7 @@
 package com.heri2go.chat.domain.user;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.heri2go.chat.web.controller.auth.request.UserRegisterRequest;
@@ -12,10 +13,13 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Document(collection = "users")
+@Document
 public class User {
+
     @Id
     private String id;
+
+    @Indexed(unique = true)
     private String username;
     private String password;
     private String email;

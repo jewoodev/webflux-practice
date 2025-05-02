@@ -5,5 +5,5 @@ import reactor.core.publisher.Flux;
 
 public interface ChatRepository extends ReactiveMongoRepository<Chat, String> {
 
-    Flux<Chat> findByRoomNumOrderByCreatedAt(Long roomNum);
+    Flux<Chat> findByRoomId(String roomId);
 }

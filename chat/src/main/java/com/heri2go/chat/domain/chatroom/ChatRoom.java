@@ -17,6 +17,7 @@ public class ChatRoom {
 
     @Id
     private String id;
+    private String orderId;
     private String roomName;
     private Set<String> participantIds;
     private String lastMessage;
@@ -24,7 +25,8 @@ public class ChatRoom {
     private LocalDateTime lastMessageTime;
 
     @Builder
-    private ChatRoom(String roomName, Set<String> participantIds, String lastMessage, String lastSender, LocalDateTime lastMessageTime) {
+    private ChatRoom(String orderId, String roomName, Set<String> participantIds, String lastMessage, String lastSender, LocalDateTime lastMessageTime) {
+        this.orderId = orderId;
         this.roomName = roomName;
         this.participantIds = participantIds;
         this.lastMessage = lastMessage;
@@ -34,6 +36,7 @@ public class ChatRoom {
 
     public static ChatRoom from(ChatRoomCreateRequest request) {
         return ChatRoom.builder()
+                .orderId(request.orderId())
                 .roomName(request.roomName())
                 .participantIds(request.participantIds())
                 .lastMessage(request.lastMessage())

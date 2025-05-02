@@ -26,25 +26,25 @@ class ChatRepositoryTest extends MongoTestSupport {
         LocalDateTime now = LocalDateTime.now();
 
         Chat chat1 = Chat.builder()
-                .roomNum(1L)
+                .roomId("1")
                 .content("첫 번째 메시지")
                 .createdAt(now.minusMinutes(2))
                 .build();
 
         Chat chat2 = Chat.builder()
-                .roomNum(1L)
+                .roomId("1")
                 .content("두 번째 메시지")
                 .createdAt(now.minusMinutes(1))
                 .build();
 
         Chat chat3 = Chat.builder()
-                .roomNum(1L)
+                .roomId("1")
                 .content("세 번째 메시지")
                 .createdAt(now)
                 .build();
 
         Chat chat4 = Chat.builder()
-                .roomNum(2L)
+                .roomId("2")
                 .content("다른 방 메시지")
                 .createdAt(now)
                 .build();
@@ -55,7 +55,7 @@ class ChatRepositoryTest extends MongoTestSupport {
                 .blockLast();
 
         // 테스트 실행
-        Flux<Chat> result = chatRepository.findByRoomNumOrderByCreatedAt(1L);
+        Flux<Chat> result = chatRepository.findByRoomId("1");
 
         // 검증
         StepVerifier.create(result)

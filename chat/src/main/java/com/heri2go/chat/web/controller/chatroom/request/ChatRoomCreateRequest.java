@@ -7,6 +7,7 @@ import java.util.Set;
 
 @Builder
 public record ChatRoomCreateRequest(
+        String orderId,
         String roomName,
         Set<String> participantIds,
         String lastMessage,

@@ -3,7 +3,10 @@ package com.heri2go.chat.web.service.chat;
 import com.heri2go.chat.MockTestSupport;
 import com.heri2go.chat.domain.chat.Chat;
 import com.heri2go.chat.domain.chat.ChatRepository;
+import com.heri2go.chat.domain.user.User;
+import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
+import com.heri2go.chat.web.exception.ResourceNotFoundException;
 import com.heri2go.chat.web.service.chat.response.ChatResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +18,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -29,24 +33,30 @@ class ChatServiceTest extends MockTestSupport {
 
         private Chat sampleChat;
         private ChatCreateRequest sampleReq;
+        private final String testUsername = "testUser";
+        private final String testRoomId = "101";
 
         @BeforeEach
         void setUp() {
                 // 테스트용 샘플 데이터 생성
                 sampleChat = Chat.builder()
-                                .sender("testUser")
+                                .sender(testUsername)
                                 .content("Hello, WebFlux!")
-                                .roomNum(101L)
+                                .roomId(testRoomId)
+                                .unreadUsernames(Set.of(testUsername))
                                 .lang("en")
                                 .createdAt(LocalDateTime.now())
                                 .build();
 
                 sampleReq = ChatCreateRequest.builder()
-                                .sender("testUser")
+                                .sender(testUsername)
                                 .content("Hello, WebFlux!")
-                                .roomNum(101L)
+                                .unreadUsernames(Set.of(testUsername))
+                                .roomId(testRoomId)
                                 .lang("en")
                                 .build();
+
+                
         }
 
         @DisplayName("정상적인 메세지를 저장하면 정상적으로 응답 Dto를 돌려받는다.")
@@ -57,7 +67,7 @@ class ChatServiceTest extends MockTestSupport {
 
                 // Then
                 StepVerifier.create(chatService.save(sampleReq))
-                                .expectNextMatches(resp -> resp.roomNum().equals(sampleReq.roomNum()) &&
+                                .expectNextMatches(resp -> resp.roomId().equals(sampleReq.roomId()) &&
                                                 resp.sender().equals(sampleReq.sender()) &&
                                                 resp.content().equals(sampleReq.content()))
                                 .verifyComplete();
@@ -67,33 +77,34 @@ class ChatServiceTest extends MockTestSupport {
         @Test
         void getByRoomNum_validRoomNum_shouldReturnChatMessageRespFlux() {
                 // Given
-                when(chatRepository.findByRoomNumOrderByCreatedAt(101L))
+                UserDetailsImpl testUser = new UserDetailsImpl(User.builder().username("testUser").build());
+                when(chatRepository.findByRoomId("101"))
                                 .thenReturn(Flux.just(sampleChat));
 
                 // When
-                Flux<ChatResponse> result = chatService.getByRoomNum(101L);
+                Flux<ChatResponse> result = chatService.getByRoomIdToInvited("101", testUser);
 
                 // Then
                 StepVerifier.create(result)
-                                .expectNextMatches(resp -> resp.roomNum().equals(101L) &&
-                                                resp.sender().equals("testUser") &&
+                                .expectNextMatches(resp -> resp.roomId().equals(testRoomId) &&
+                                                resp.sender().equals(testUsername) &&
                                                 resp.content().equals("Hello, WebFlux!"))
                                 .verifyComplete();
         }
 
-        @DisplayName("채팅이 없는 채팅방 번호로 조회를 하면 0개의 채팅이 결과로 나온다.")
+        @DisplayName("채팅이 없는 채팅방을 조회하면 0개의 채팅이 결과로 나온다.")
         @Test
-        void getByRoomNum_shouldReturnEmptyFluxForNonExistingRoom() {
+        void getEmptyChat_IfNonChatRoomIsQueried() {
                 // Given
-                when(chatRepository.findByRoomNumOrderByCreatedAt(999L))
-                                .thenReturn(Flux.empty());
+                UserDetailsImpl testUser = new UserDetailsImpl(User.builder().username("testUser").build());
 
                 // When
-                Flux<ChatResponse> result = chatService.getByRoomNum(999L);
+                when(chatRepository.findByRoomId("999"))
+                                .thenReturn(Flux.empty());
 
                 // Then
-                StepVerifier.create(result)
-                                .expectNextCount(0)
-                                .verifyComplete();
+                StepVerifier.create(chatService.getByRoomIdToInvited("999", testUser))
+                                .expectError(ResourceNotFoundException.class)
+                                .verify();
         }
 }

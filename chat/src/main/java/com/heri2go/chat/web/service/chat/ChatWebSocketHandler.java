@@ -1,31 +1,40 @@
 package com.heri2go.chat.web.service.chat;
 
-import static com.heri2go.chat.web.service.session.ConnectInfoProvider.SERVER_ID;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.socket.WebSocketHandler;
-import org.springframework.web.reactive.socket.WebSocketMessage;
-import org.springframework.web.reactive.socket.WebSocketSession;
-
+import com.heri2go.chat.domain.chatroom.ChatRoom;
+import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.util.chat.ChatConverter;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
+import com.heri2go.chat.web.exception.ResourceNotFoundException;
+import com.heri2go.chat.web.service.chatroom.ChatRoomService;
 import com.heri2go.chat.web.service.session.ConnectInfoProvider;
 import com.heri2go.chat.web.service.session.RedisSessionManager;
-
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.socket.CloseStatus;
+import org.springframework.web.reactive.socket.WebSocketHandler;
+import org.springframework.web.reactive.socket.WebSocketMessage;
+import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Mono;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static com.heri2go.chat.web.service.session.ConnectInfoProvider.SERVER_ID;
 
 @Slf4j
 @RequiredArgsConstructor
 @Component
 public class ChatWebSocketHandler implements WebSocketHandler {
     private final ChatService chatService;
+    private final ChatRoomService chatRoomService;
     private final RedisSessionManager sessionManager;
     private final ChatConverter chatConverter;
     private final ReactiveRedisTemplate<String, String> redisTemplate;
@@ -39,16 +48,57 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                 .doOnError(error -> log.error("Redis subscription error: ", error))
                 .flatMap(message -> {
                     String channel = message.getChannel();
-                    Long roomNum = Long.valueOf(channel.substring(SERVER_ID.length() + 1));
-                    return broadcastToRoom(roomNum, message.getMessage());
+                    String roomId = channel.substring(SERVER_ID.length() + 1);
+                    return broadcastToRoom(roomId, message.getMessage());
                 })
                 .subscribe();
     }
 
     @Override
     public Mono<Void> handle(WebSocketSession session) {
-        sessions.put(session.getId(), session);
+        // 1. SecurityContext에서 인증된 사용자 정보 추출
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .map(Authentication::getPrincipal)
+                .cast(UserDetailsImpl.class)
+                .flatMap(userDetails -> {
+                    // 2. 쿼리 파라미터에서 roomName 추출
+                    String roomId = extractRoomId(session);
+                    if (roomId == null) {
+                        return session.close(CloseStatus.BAD_DATA.withReason("Room ID is required"));
+                    }
 
+                    // 3. 채팅방 참여자 확인
+                    return chatRoomService.getById(roomId)
+                            .switchIfEmpty(Mono.defer(() ->
+                                            session.close(CloseStatus.BAD_DATA.withReason("Chat room not found"))
+                                                    .then(Mono.error(new ResourceNotFoundException("Chat room not found")))))
+                            .flatMap(chatRoom -> {
+                                if (!chatRoom.getParticipantIds().contains(userDetails.getUserId())) {
+                                    return session.close(CloseStatus.POLICY_VIOLATION.withReason("User is not a member of this room"));
+                                }
+
+                                // 4. 연결 허용 및 세션 관리
+                                sessions.put(session.getId(), session);
+                                return handleWebSocketSession(session, userDetails, chatRoom);
+                            });
+                })
+                .onErrorResume(e -> {
+                    log.error("WebSocket connection error", e);
+                    return session.close(CloseStatus.SERVER_ERROR.withReason("Internal server error"));
+                });
+    }
+
+    private String extractRoomId(WebSocketSession session) {
+        return Arrays.stream(session.getHandshakeInfo().getUri().getQuery()
+                .split("&"))
+                .filter(param -> param.startsWith("roomId="))
+                .map(param -> param.substring("roomId=".length()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Mono<Void> handleWebSocketSession(WebSocketSession session, UserDetails userDetails, ChatRoom chatRoom) {
         return session.receive()
                 .map(WebSocketMessage::getPayloadAsText)
                 .flatMap(payload -> handleIncomingMessage(session, payload))
@@ -80,7 +130,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
 
     private Mono<Void> handleEnterMessage(WebSocketSession session, ChatCreateRequest message) {
         return sessionManager.saveSession(session.getId(),
-                message.roomNum().toString(),
+                message.roomId(),
                 message.sender())
                 .then(publishMessage(message));
     }
@@ -99,15 +149,13 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     private Mono<Void> publishMessage(ChatCreateRequest chatMessage) {
         return chatConverter.convertToJson(chatMessage)
                 .flatMap(message -> redisTemplate.convertAndSend(
-                            cip.getRoomKey(chatMessage.roomNum().toString()),
-                            message
-                        )
-                )
+                        cip.getRoomKey(chatMessage.roomId()),
+                        message))
                 .then();
     }
 
-    private Mono<Void> broadcastToRoom(Long roomNum, String message) {
-        return sessionManager.getRoomSessions(roomNum.toString())
+    private Mono<Void> broadcastToRoom(String roomId, String message) {
+        return sessionManager.getRoomSessions(roomId.toString())
                 .flatMap(sessionId -> sendMessageToSession(sessionId, message))
                 .then();
     }

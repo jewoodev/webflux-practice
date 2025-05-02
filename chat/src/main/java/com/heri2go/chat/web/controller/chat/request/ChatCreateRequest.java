@@ -1,20 +1,24 @@
 package com.heri2go.chat.web.controller.chat.request;
 
+import java.util.Set;
+
 import lombok.Builder;
 
 @Builder
 public record ChatCreateRequest(
-    String sender,
     String content,
-    Long roomNum,
+    String sender,
+    Set<String> unreadUsernames,
+    String roomId,
     String lang,
     MessageType type
 ) {
     public static ChatCreateRequest withTranslatedMsg(ChatCreateRequest req, String translatedMessage) {
         return ChatCreateRequest.builder()
-                .sender(req.sender())
                 .content(translatedMessage)
-                .roomNum(req.roomNum())
+                .sender(req.sender())
+                .unreadUsernames(req.unreadUsernames())
+                .roomId(req.roomId())
                 .lang(req.lang())
                 .type(req.type())
                 .build();

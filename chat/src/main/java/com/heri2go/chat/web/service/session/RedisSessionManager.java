@@ -24,7 +24,7 @@ public class RedisSessionManager {
         String roomKey = cip.getRoomKey(roomId);
 
         return redisTemplate.opsForHash().putAll(sessionKey, Map.of(
-                        "roomId", roomId,
+                        "roomName", roomId,
                         "username", username
                 ))
                 .then(redisTemplate.expire(sessionKey, SESSION_TTL))
@@ -42,7 +42,7 @@ public class RedisSessionManager {
     public Mono<Void> removeSession(String sessionId) {
         return getSessionInfo(sessionId)
                 .flatMap(sessionInfo ->
-                        redisTemplate.opsForSet().remove(cip.getRoomKey(sessionInfo.get("roomId")), sessionId)
+                        redisTemplate.opsForSet().remove(cip.getRoomKey(sessionInfo.get("roomName")), sessionId)
                             .then(redisTemplate.delete(cip.getSessionKey(sessionId)))
                 )
                 .then();

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public record ChatResponse(
         String sender,
         String content,
-        Long roomNum,
+        String roomId,
         Double sentimentScore,
         LocalDateTime createdAt
 ) {
@@ -18,7 +18,7 @@ public record ChatResponse(
         return ChatResponse.builder()
                 .sender(chat.getSender())
                 .content(chat.getContent())
-                .roomNum(chat.getRoomNum())
+                .roomId(chat.getRoomId())
                 .sentimentScore(chat.getSentimentScore())
                 .createdAt(chat.getCreatedAt())
                 .build();
