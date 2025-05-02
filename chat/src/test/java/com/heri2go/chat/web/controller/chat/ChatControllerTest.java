@@ -2,7 +2,6 @@ package com.heri2go.chat.web.controller.chat;
 
 import com.heri2go.chat.MockTestSupport;
 import com.heri2go.chat.domain.chat.Chat;
-import com.heri2go.chat.domain.chatroom.ChatRoom;
 import com.heri2go.chat.domain.user.Role;
 import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
@@ -59,14 +58,15 @@ class ChatControllerTest extends MockTestSupport {
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 testUserDetails, null, testUserDetails.getAuthorities());
 
-        ChatRoom testChatRoom = ChatRoom.builder()
-                        .roomName("Test room name")
-                        .orderId("Test order id")
-                        .participantIds(Set.of("Lab chief", "Lab staff 1", "Lab staff 2", "Dentist"))
-                        .lastMessage("last message")
-                        .lastSender("last sender")
-                        .lastMessageTime(NOW.minusHours(1))
-                        .build();
+        // 전제되는 채팅방
+        // ChatRoom testChatRoom = ChatRoom.builder()
+        //                 .roomName("Test room name")
+        //                 .orderId("Test order id")
+        //                 .participantIds(Set.of("Lab chief", "Lab staff 1", "Lab staff 2", "Dentist"))
+        //                 .lastMessage("last message")
+        //                 .lastSender("last sender")
+        //                 .lastMessageTime(NOW.minusHours(1))
+        //                 .build();
 
         Chat testChat = Chat.builder()
                         .content("Test content")

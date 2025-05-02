@@ -9,6 +9,7 @@ import com.heri2go.chat.web.service.chatroom.ChatRoomService;
 import com.heri2go.chat.web.service.session.ConnectInfoProvider;
 import com.heri2go.chat.web.service.session.RedisSessionManager;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -52,6 +53,11 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                     return broadcastToRoom(roomId, message.getMessage());
                 })
                 .subscribe();
+    }
+
+    @PreDestroy
+    public void tearDown() {
+        sessions.keySet().forEach(sessionManager::removeSession);
     }
 
     @Override

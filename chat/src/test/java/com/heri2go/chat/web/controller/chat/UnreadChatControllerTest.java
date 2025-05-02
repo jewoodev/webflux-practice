@@ -17,15 +17,12 @@ import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 
-import java.time.LocalDateTime;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 class UnreadChatControllerTest extends MockTestSupport {
 
     private WebTestClient webTestClient;
-    private static final LocalDateTime NOW = LocalDateTime.now();
 
     @Mock
     UnreadChatService unreadChatService;

@@ -18,8 +18,8 @@ public class ChatController {
 
     private final ChatService chatService;
 
-    @GetMapping("/{roomName}") // 채팅 기록을 가져올 때 채팅방에 초대되어 있는 유저가 아니면 실패한다.
-    public Flux<ChatResponse> getChatHistory(@PathVariable("roomName") String roomId,
+    @GetMapping("/{roomId}") // 채팅 기록을 가져올 때 채팅방에 초대되어 있는 유저가 아니면 실패한다.
+    public Flux<ChatResponse> getChatHistory(@PathVariable("roomId") String roomId,
                                              @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         return chatService.getByRoomIdToInvited(roomId, userDetails);
