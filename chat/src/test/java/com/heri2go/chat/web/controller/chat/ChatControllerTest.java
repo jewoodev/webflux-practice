@@ -82,7 +82,7 @@ class ChatControllerTest extends MockTestSupport {
         String encodedRoomId = URLEncoder.encode(testChat.getRoomId(), StandardCharsets.UTF_8);
 
         when(chatService.getByRoomIdToInvited(eq(testChat.getRoomId()), any(UserDetailsImpl.class)))
-                        .thenReturn(Flux.just(ChatResponse.fromEntity(testChat)));
+                        .thenReturn(Flux.just(ChatResponse.from(testChat)));
 
         // then
         webTestClient.mutate()

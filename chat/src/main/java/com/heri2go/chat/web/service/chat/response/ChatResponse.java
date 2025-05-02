@@ -14,7 +14,7 @@ public record ChatResponse(
         LocalDateTime createdAt
 ) {
 
-    public static ChatResponse fromEntity(Chat chat) {
+    public static ChatResponse from(Chat chat) {
         return ChatResponse.builder()
                 .sender(chat.getSender())
                 .content(chat.getContent())

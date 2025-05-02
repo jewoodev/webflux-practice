@@ -1,6 +1,7 @@
 package com.heri2go.chat;
 
 import com.heri2go.chat.domain.chat.ChatRepository;
+import com.heri2go.chat.domain.chat.UnreadChatRepository;
 import com.heri2go.chat.domain.chatroom.ChatRoomParticipantRepository;
 import com.heri2go.chat.domain.chatroom.ChatRoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,4 +23,7 @@ public abstract class MongoTestSupport {
 
     @Autowired
     protected ChatRoomParticipantRepository chatRoomParticipantRepository;
+
+    @Autowired
+    protected UnreadChatRepository unreadChatRepository;
 }
