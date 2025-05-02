@@ -8,6 +8,8 @@ import java.util.Set;
 
 @Builder
 public record ChatRoomResponse(
+        String id,
+        String orderId,
         String roomName,
         Set<String> participantIds,
         String lastMessage,
@@ -16,6 +18,8 @@ public record ChatRoomResponse(
 ) {
     public static ChatRoomResponse from(ChatRoom chatRoom) {
         return ChatRoomResponse.builder()
+                .id(chatRoom.getId())
+                .orderId(chatRoom.getOrderId())
                 .roomName(chatRoom.getRoomName())
                 .participantIds(chatRoom.getParticipantIds())
                 .lastMessage(chatRoom.getLastMessage())

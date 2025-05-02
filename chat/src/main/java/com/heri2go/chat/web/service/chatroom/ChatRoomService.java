@@ -23,6 +23,10 @@ public class ChatRoomService {
                 .map(ChatRoomResponse::from);
     }
 
+    public Mono<ChatRoom> getById(String roomId) {
+        return chatRoomRepository.findById(roomId);
+    }
+
     public Flux<ChatRoomResponse> getOwnChatRoomResponse(UserDetailsImpl userDetails) {
         return chatRoomParticipantRepository.findAllByUsername(userDetails.getUsername())
                 .flatMap(chatRoomParticipant ->

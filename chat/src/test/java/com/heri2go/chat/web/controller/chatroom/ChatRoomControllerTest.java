@@ -4,6 +4,8 @@ import com.heri2go.chat.MockTestSupport;
 import com.heri2go.chat.domain.user.Role;
 import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
+import com.heri2go.chat.web.controller.chatroom.request.ChatRoomCreateRequest;
+import com.heri2go.chat.web.service.chat.ChatService;
 import com.heri2go.chat.web.service.chatroom.ChatRoomService;
 import com.heri2go.chat.web.service.chatroom.response.ChatRoomResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -26,10 +29,13 @@ import static org.mockito.Mockito.when;
 class ChatRoomControllerTest extends MockTestSupport {
 
     private WebTestClient webTestClient;
-    private static final String TEST_USERNAME = "testuser";
+    private static final LocalDateTime NOW = LocalDateTime.now();
 
     @Mock
     private ChatRoomService chatRoomService;
+
+    @Mock 
+    private ChatService chatService;
 
     @InjectMocks
     private ChatRoomController chatRoomController;
@@ -45,13 +51,16 @@ class ChatRoomControllerTest extends MockTestSupport {
     @Test
     void userCanGetChatRoomInfoThroughAuthentication() {
         // given
-        UserDetailsImpl testUser = new UserDetailsImpl(
+        String testUsername = "testuser";
+
+        UserDetailsImpl testUserDetails = new UserDetailsImpl(
                 User.builder()
-                        .username(TEST_USERNAME)
+                        .username(testUsername)
                         .role(Role.LAB)
                         .build());
+
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                TEST_USERNAME, null, testUser.getAuthorities());
+                testUserDetails, null, testUserDetails.getAuthorities());
 
         // when
         when(chatRoomService.getOwnChatRoomResponse(any(UserDetailsImpl.class)))
@@ -59,7 +68,7 @@ class ChatRoomControllerTest extends MockTestSupport {
                     Flux.just(
                         ChatRoomResponse.builder()
                                     .roomName("test chat room")
-                                    .participantIds(Set.of(TEST_USERNAME, "user2"))
+                                    .participantIds(Set.of(testUsername, "user2"))
                                     .lastMessage("last message")
                                     .lastSender("last sender")
                                     .lastMessageTime(LocalDateTime.now().minusHours(1))
@@ -78,5 +87,48 @@ class ChatRoomControllerTest extends MockTestSupport {
                 .expectStatus().isOk()
                 .expectBodyList(ChatRoomResponse.class)
                 .hasSize(1);
+    }
+    
+    @DisplayName("주문이 생성되면 채팅방이 생성된다.")
+    @Test
+    void chatRoom_iscreated_when_order_isCreated() {
+        // given
+        ChatRoomCreateRequest requestedStartedWithOrder = ChatRoomCreateRequest.builder()
+                .orderId("Test order id")
+                .roomName("Test room name")
+                .participantIds(Set.of("Lab chief", "Lab staff 1", "Lab staff 2"))
+                .lastMessage("last message")
+                .lastSender("last sender")
+                .lastMessageTime(NOW.minusHours(1))
+                .build();
+
+        ChatRoomResponse response = ChatRoomResponse.builder()
+                                                .roomName("Test room name")
+                                                .orderId("Test order id")
+                                                .participantIds(Set.of("Lab chief", "Lab staff 1", "Lab staff 2", "Dentist"))
+                                                .lastMessage("last message")
+                                                .lastSender("last sender")
+                                                .lastMessageTime(NOW.minusHours(1))
+                                                .build();
+
+        // when
+        when(chatRoomService.save(requestedStartedWithOrder))
+                .thenReturn(Mono.just(response));
+
+        // then
+        webTestClient.post()
+                .uri("/api/chat-room/create")
+                .bodyValue(requestedStartedWithOrder)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(ChatRoomResponse.class)
+                .isEqualTo(ChatRoomResponse.builder()
+                        .roomName("Test room name")
+                        .orderId("Test order id")
+                        .participantIds(Set.of("Lab chief", "Lab staff 1", "Lab staff 2", "Dentist"))
+                        .lastMessage("last message")
+                        .lastSender("last sender")
+                        .lastMessageTime(NOW.minusHours(1))
+                        .build());
     }
 }
