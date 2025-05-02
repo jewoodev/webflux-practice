@@ -25,10 +25,10 @@ import reactor.core.publisher.Mono;
 public class ChatService {
     private final ChatRepository chatRepository;
     private final ChatConverter chatConverter;
+    private final UnreadChatService unreadChatService;
 
-    public Mono<ChatResponse> save(ChatCreateRequest req) {
-        return chatRepository.save(Chat.from(req))
-                .map(ChatResponse::fromEntity);
+    public Mono<Chat> save(ChatCreateRequest req) {
+        return chatRepository.save(Chat.from(req));
     }
 
     public Flux<ChatResponse> getByRoomIdToInvited(String roomId, UserDetailsImpl userDetails) {
@@ -36,7 +36,7 @@ public class ChatService {
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException("존재하지 않는 채팅방입니다.")))
                 .filter(chat -> chat.getUnreadUsernames().contains(userDetails.getUsername()))
                 .switchIfEmpty(Mono.error(new UnauthorizedException("접근 권한이 없는 채팅방입니다.")))
-                .map(ChatResponse::fromEntity);
+                .map(ChatResponse::from);
     }
 
     public Mono<String> processMessage(ChatCreateRequest req) {
@@ -46,7 +46,9 @@ public class ChatService {
                 return Mono.error(new MessageInvalidException("메세지 내용이 비어있어 에러 발생"));
             }
 
+            // 모든 채팅은 저장된 후, UnreadChat(단일 유저에게 수신된 메세지 중에 확인하지 않은 메세지 정보)를 추가적으로 저장해야 한다.
             return this.save(req)
+                    .flatMap(unreadChatService::save)
                     .flatMap(chatConverter::convertToJson)
                     .onErrorResume(JsonProcessingException.class, e -> {
                         log.error("메세지 저장 후 응답 Dto로 변환 중 에러 발생: ", e);
