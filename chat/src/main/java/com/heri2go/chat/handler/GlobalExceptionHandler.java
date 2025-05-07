@@ -13,16 +13,6 @@ import static org.springframework.http.HttpStatus.*;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(DataAccessException.class)
-    public ResponseEntity<ErrorResponse> handle(DataAccessException e) {
-        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(new ErrorResponse(INTERNAL_SERVER_ERROR, e.getMessage()));
-    }
-
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handle(BadCredentialsException e) {
-        return ResponseEntity.badRequest().body(new ErrorResponse(BAD_REQUEST, e.getMessage()));
-    }
-
     @ExceptionHandler(DuplicatedUsernameException.class)
     public ResponseEntity<ErrorResponse> handle(DuplicatedUsernameException e) {
         return ResponseEntity.badRequest().body(new ErrorResponse(BAD_REQUEST, e.getMessage()));
@@ -38,13 +28,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(NOT_FOUND).body(new ErrorResponse(NOT_FOUND, e.getMessage()));
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponse> handle(UnauthorizedException e) {
         return ResponseEntity.status(UNAUTHORIZED).body(new ErrorResponse(UNAUTHORIZED, e.getMessage()));
     }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handle(UserNotFoundException e) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(BAD_REQUEST, e.getMessage()));
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ResponseEntity<ErrorResponse> handle(DataAccessException e) {
+        return ResponseEntity.status(INTERNAL_SERVER_ERROR).body(new ErrorResponse(INTERNAL_SERVER_ERROR, e.getMessage()));
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handle(BadCredentialsException e) {
         return ResponseEntity.badRequest().body(new ErrorResponse(BAD_REQUEST, e.getMessage()));
     }
 
