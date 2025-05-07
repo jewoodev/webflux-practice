@@ -1,4 +1,4 @@
-package com.heri2go.chat.config;
+package com.heri2go.chat.eventlistener;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

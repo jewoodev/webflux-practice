@@ -3,12 +3,14 @@ package com.heri2go.chat.web.service.chat;
 import com.heri2go.chat.domain.user.Role;
 import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserRepository;
-import com.heri2go.chat.web.controller.auth.request.UserLoginRequest;
+import com.heri2go.chat.web.controller.auth.request.LoginRequest;
 import com.heri2go.chat.web.controller.auth.request.UserRegisterRequest;
 import com.heri2go.chat.web.exception.DuplicatedUsernameException;
 import com.heri2go.chat.web.service.auth.AuthService;
 import com.heri2go.chat.web.service.auth.JwtService;
-import com.heri2go.chat.web.service.auth.response.UserResponse;
+import com.heri2go.chat.web.service.auth.response.LoginResponse;
+import com.heri2go.chat.web.service.user.UserService;
+import com.heri2go.chat.web.service.user.response.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +34,9 @@ class AuthServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private UserService userService;
+
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     @Mock
@@ -41,8 +46,9 @@ class AuthServiceTest {
     private AuthService authService;
 
     private UserRegisterRequest validRegisterRequest;
-    private UserLoginRequest validLoginRequest;
+    private LoginRequest validLoginRequest;
     private User savedUser;
+    private UserResponse savedUserResponse;
 
     @BeforeEach
     void setUp() {
@@ -53,14 +59,19 @@ class AuthServiceTest {
                                             .role("LAB")
                                             .build();
 
-        validLoginRequest = new UserLoginRequest(
+        validLoginRequest = new LoginRequest(
                         "testuser",
                         "password123");
 
         savedUser = User.builder()
+                .username("testuser")
+                .password("encodedPassword")
+                .role(Role.LAB)
+                .build();
+
+        savedUserResponse = UserResponse.builder()
                         .username("testuser")
                         .password("encodedPassword")
-                        .email("test@example.com")
                         .role(Role.LAB)
                         .build();
     }
@@ -69,18 +80,13 @@ class AuthServiceTest {
     @Test
     void register_WhenUsernameNotExists_ShouldSaveUser() {
         // Given
-        when(userRepository.findByUsername(anyString())).thenReturn(Mono.empty());
+        when(userService.getByUsername(anyString())).thenReturn(Mono.empty());
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(Mono.just(savedUser));
 
-        // When
-        Mono<UserResponse> result = authService.register(validRegisterRequest);
-
-        // Then
-        StepVerifier.create(result)
-                    .expectNextMatches(user -> user.username().equals(validRegisterRequest.username()) &&
-                                    user.email().equals(validRegisterRequest.email()) &&
-                                    user.role().equals("LAB"))
+        // When // Then
+        StepVerifier.create(authService.register(validRegisterRequest))
+                    .expectNextMatches(user -> user.username().equals(validRegisterRequest.username()))
                     .verifyComplete();
     }
 
@@ -88,13 +94,10 @@ class AuthServiceTest {
     @Test
     void register_WhenUsernameExists_ShouldThrowError() {
         // Given
-        when(userRepository.findByUsername(anyString())).thenReturn(Mono.just(savedUser));
+        when(userService.getByUsername(anyString())).thenReturn(Mono.just(savedUserResponse));
 
-        // When
-        Mono<UserResponse> result = authService.register(validRegisterRequest);
-
-        // Then
-        StepVerifier.create(result)
+        // When // Then
+        StepVerifier.create(authService.register(validRegisterRequest))
                     .expectError(DuplicatedUsernameException.class)
                     .verify();
     }
@@ -103,12 +106,12 @@ class AuthServiceTest {
     @Test
     void login_WithValidCredentials_ShouldReturnUser() {
         // Given
-        when(userRepository.findByUsername(anyString())).thenReturn(Mono.just(savedUser));
+        when(userService.getByUsername(anyString())).thenReturn(Mono.just(savedUserResponse));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
         when(jwtService.generateToken(anyString())).thenReturn("generatedToken");
 
         // When
-        Mono<UserResponse> result = authService.login(validLoginRequest);
+        Mono<LoginResponse> result = authService.login(validLoginRequest);
 
         // Then
         StepVerifier.create(result)
@@ -121,11 +124,11 @@ class AuthServiceTest {
     @Test
     void login_WithInvalidPassword_ShouldThrowError() {
         // Given
-        when(userRepository.findByUsername(anyString())).thenReturn(Mono.just(savedUser));
+        when(userService.getByUsername(anyString())).thenReturn(Mono.just(savedUserResponse));
         when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
         // When
-        Mono<UserResponse> result = authService.login(validLoginRequest);
+        Mono<LoginResponse> result = authService.login(validLoginRequest);
 
         // Then
         StepVerifier.create(result)
@@ -137,10 +140,10 @@ class AuthServiceTest {
     @Test
     void login_WithNonExistentUsername_ShouldThrowError() {
         // Given
-        when(userRepository.findByUsername(anyString())).thenReturn(Mono.empty());
+        when(userService.getByUsername(anyString())).thenReturn(Mono.empty());
 
         // When
-        Mono<UserResponse> result = authService.login(validLoginRequest);
+        Mono<LoginResponse> result = authService.login(validLoginRequest);
 
         // Then
         StepVerifier.create(result)

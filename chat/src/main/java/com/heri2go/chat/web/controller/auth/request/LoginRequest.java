@@ -2,7 +2,7 @@ package com.heri2go.chat.web.controller.auth.request;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record UserLoginRequest(
+public record LoginRequest(
     @NotBlank(message = "Username is required") 
     String username,
 

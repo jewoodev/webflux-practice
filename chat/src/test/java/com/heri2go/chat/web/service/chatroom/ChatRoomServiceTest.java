@@ -1,31 +1,31 @@
 package com.heri2go.chat.web.service.chatroom;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
-
-import java.time.LocalDateTime;
-import java.util.Set;
-
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-
 import com.heri2go.chat.MockTestSupport;
 import com.heri2go.chat.domain.chatroom.ChatRoom;
 import com.heri2go.chat.domain.chatroom.ChatRoomParticipant;
 import com.heri2go.chat.domain.chatroom.ChatRoomParticipantRepository;
 import com.heri2go.chat.domain.chatroom.ChatRoomRepository;
-import com.heri2go.chat.domain.user.Role;
 import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.controller.chatroom.request.ChatRoomCreateRequest;
 import com.heri2go.chat.web.service.chatroom.response.ChatRoomResponse;
-
+import com.heri2go.chat.web.service.user.UserService;
+import com.heri2go.chat.web.service.user.response.UserResponse;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+
+import java.time.LocalDateTime;
+import java.util.Set;
+
+import static com.heri2go.chat.domain.user.Role.LAB;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 class ChatRoomServiceTest extends MockTestSupport {
 
@@ -34,6 +34,9 @@ class ChatRoomServiceTest extends MockTestSupport {
 
     @Mock
     ChatRoomParticipantRepository chatRoomParticipantRepository;
+
+    @Mock
+    UserService userService;
 
     @InjectMocks
     ChatRoomService chatRoomService;
@@ -49,7 +52,7 @@ class ChatRoomServiceTest extends MockTestSupport {
         UserDetailsImpl testUser = new UserDetailsImpl(
                 User.builder()
                         .username(testUsername)
-                        .role(Role.LAB)
+                        .role(LAB)
                         .build());
 
         ChatRoomParticipant chatRoomParticipant = ChatRoomParticipant.builder()
@@ -109,6 +112,12 @@ class ChatRoomServiceTest extends MockTestSupport {
     @Test
     void chatRoom_isCreated_when_order_isCreated() {
         // given
+        UserResponse userResponse = UserResponse.builder()
+                .username("test user")
+                .password("encodedPassword")
+                .role(LAB)
+                .build();
+
         ChatRoomCreateRequest createRequestStartedWithOrder = ChatRoomCreateRequest.builder()
                 .roomName("test chat room 1")
                 .orderId("orderId1")
@@ -119,6 +128,7 @@ class ChatRoomServiceTest extends MockTestSupport {
                 .build();
 
         // when
+        when(userService.getById(any(String.class))).thenReturn(Mono.just(userResponse));
         when(chatRoomRepository.save(any(ChatRoom.class))).thenReturn(Mono.just(ChatRoom.from(createRequestStartedWithOrder)));
 
         // then
