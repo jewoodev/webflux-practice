@@ -11,6 +11,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Document
@@ -25,12 +27,17 @@ public class User {
     private String email;
     private Role role;
 
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
     @Builder
-    private User(String username, String password, String email, Role role) {
+    private User(String username, String password, String email, Role role, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.username = username;
         this.password = password;
         this.email = email;
         this.role = role;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     public static User from(UserRegisterRequest req) {
@@ -39,6 +46,8 @@ public class User {
                 .password(req.password())
                 .email(req.email())
                 .role(Role.valueOf(req.role()))
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
     }
 }
