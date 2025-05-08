@@ -80,7 +80,7 @@ class AuthServiceTest {
     @Test
     void register_WhenUsernameNotExists_ShouldSaveUser() {
         // Given
-        when(userService.getByUsername(anyString())).thenReturn(Mono.empty());
+        when(userRepository.findByUsername(anyString())).thenReturn(Mono.empty());
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(Mono.just(savedUser));
 
@@ -94,7 +94,7 @@ class AuthServiceTest {
     @Test
     void register_WhenUsernameExists_ShouldThrowError() {
         // Given
-        when(userService.getByUsername(anyString())).thenReturn(Mono.just(savedUserResponse));
+        when(userRepository.findByUsername(anyString())).thenReturn(Mono.just(savedUser));
 
         // When // Then
         StepVerifier.create(authService.register(validRegisterRequest))

@@ -1,5 +1,6 @@
 package com.heri2go.chat.web.service.chat;
 
+import com.heri2go.chat.domain.RedisDao;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.util.chat.ChatConverter;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
@@ -10,7 +11,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -21,6 +21,7 @@ import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,16 +33,17 @@ import static com.heri2go.chat.web.service.session.ConnectInfoProvider.SERVER_ID
 public class ChatWebSocketHandler implements WebSocketHandler {
     private final ChatService chatService;
     private final ChatRoomService chatRoomService;
+    private final UnreadChatService unreadChatService;
     private final RedisSessionManager sessionManager;
     private final ChatConverter chatConverter;
-    private final ReactiveRedisTemplate<String, String> redisTemplate;
+    private final RedisDao redisDao;
     private final ConnectInfoProvider cip;
 
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void initSubscription() {
-        redisTemplate.listenToPattern(cip.getRoomKey("*"))
+        redisDao.listenToPattern(cip.getRoomKey("*"))
                 .doOnError(error -> log.error("Redis subscription error: ", error))
                 .flatMap(message -> {
                     String channel = message.getChannel();
@@ -68,10 +70,14 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                     
                     // 사용자의 모든 채팅방 구독
                     return chatRoomService.getOwnChatRoomResponse(userDetails)
-                            .flatMap(chatRoom -> {
-                                return sessionManager.saveSession(session.getId(), chatRoom.id(), userDetails.getUsername());
-                            })
-                            .then(handleMessage(session)); // 실시간 메세지 처리 방식 정의
+                            .flatMap(chatRoom ->
+                                    sessionManager.saveSession(session.getId(), chatRoom.id(), userDetails.getUsername())
+                                            .then(unreadChatService.getOfflineChat(userDetails) // 오프라인 상태인 동안 처리되지 못한 메세지 알림
+                                                    .flatMap(chatConverter::convertToJson)
+                                                    .flatMap(json -> sendMessageToSession(session.getId(), json))
+                                                    .then(Mono.empty())
+                            ))
+                            .then(handleMessageAndDisconnect(session, userDetails)); // 실시간 메세지 처리 방식, 연결 끊김 시 처리 방식 정의
                 })
                 .onErrorResume(e -> {
                     log.error("WebSocket connection error", e);
@@ -79,14 +85,19 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                 });
     }
 
-    private Mono<Void> handleMessage(WebSocketSession session) {
+    private Mono<Void> handleMessageAndDisconnect(WebSocketSession session, UserDetailsImpl userDetails) {
         return session.receive()
                 .map(WebSocketMessage::getPayloadAsText)
                 .flatMap(payload -> handleIncomingMessage(session, payload))
                 .then(Mono.fromRunnable(() -> {
                     sessions.remove(session.getId());
                     sessionManager.removeSession(session.getId()).subscribe();
-                }));
+                }))
+                .then(redisDao.setString(
+                        cip.getLastOnlineTimeKey(userDetails.getUsername()),
+                        LocalDateTime.now().toString()
+                ))
+                .then();
     }
 
     private Mono<Void> handleIncomingMessage(WebSocketSession session, String payload) {
@@ -129,14 +140,14 @@ public class ChatWebSocketHandler implements WebSocketHandler {
 
     private Mono<Void> publishMessage(ChatCreateRequest chatMessage) {
         return chatConverter.convertToJson(chatMessage)
-                .flatMap(message -> redisTemplate.convertAndSend(
+                .flatMap(message -> redisDao.convertAndSend(
                         cip.getRoomKey(chatMessage.roomId()),
                         message))
                 .then();
     }
 
     private Mono<Void> broadcastToRoom(String roomId, String message) {
-        return sessionManager.getRoomSessions(roomId.toString())
+        return sessionManager.getRoomSessions(roomId)
                 .flatMap(sessionId -> sendMessageToSession(sessionId, message))
                 .then();
     }

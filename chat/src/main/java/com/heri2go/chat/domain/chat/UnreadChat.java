@@ -22,16 +22,18 @@ public class UnreadChat {
     @Indexed(unique = true)
     private String unreadUsername;
     private String sender;
+    private String content;
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     @Builder
-    private UnreadChat(String chatId, String unreadUsername, String sender,
+    private UnreadChat(String chatId, String unreadUsername, String sender, String content,
                        LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.chatId = chatId;
         this.unreadUsername = unreadUsername;
         this.sender = sender;
+        this.content = content;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -42,6 +44,7 @@ public class UnreadChat {
                         .chatId(chat.getId())
                         .unreadUsername(unreadUsername)
                         .sender(chat.getSender())
+                        .content(chat.getContent())
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
                         .build());

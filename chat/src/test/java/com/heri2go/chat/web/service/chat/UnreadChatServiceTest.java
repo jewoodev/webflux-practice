@@ -41,7 +41,7 @@ class UnreadChatServiceTest extends MockTestSupport {
                 .build();
 
         // when
-        when(unreadChatRepository.findByUnreadUsername(userDetails.getUsername()))
+        when(unreadChatRepository.findAllByUnreadUsername(userDetails.getUsername()))
                 .thenReturn(Flux.just(testUnreadChat));
 
         // then
