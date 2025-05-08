@@ -6,5 +6,5 @@ import reactor.core.publisher.Flux;
 
 public interface ChatRoomParticipantRepository extends ReactiveMongoRepository<ChatRoomParticipant, String> {
 
-    Flux<ChatRoomParticipant> findAllByUsername(String username);
+    Flux<ChatRoomParticipant> findAllByUserId(String userId);
 }

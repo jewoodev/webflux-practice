@@ -5,5 +5,5 @@ import reactor.core.publisher.Flux;
 
 public interface UnreadChatRepository extends ReactiveMongoRepository<UnreadChat, String> {
 
-    Flux<UnreadChat> findByUnreadUsername(String username);
+    Flux<UnreadChat> findAllByUnreadUsername(String username);
 }

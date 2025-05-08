@@ -30,7 +30,7 @@ class UnreadChatRepositoryTest extends MongoTestSupport {
                 .block();
 
         // then
-        StepVerifier.create(unreadChatRepository.findByUnreadUsername(testUnreadUsername))
+        StepVerifier.create(unreadChatRepository.findAllByUnreadUsername(testUnreadUsername))
                 .expectNextMatches(unreadChat -> unreadChat.getUnreadUsername().equals(testUnreadUsername)
                         && unreadChat.getChatId().equals("Test Chat Id")
                         && unreadChat.getSender().equals("Test Sender"))
