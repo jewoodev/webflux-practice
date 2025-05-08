@@ -27,7 +27,7 @@ public class AuthService {
     private final JwtService jwtService;
 
     public Mono<UserRegisterResponse> register(UserRegisterRequest registerRequest) {
-        return userService.getByUsername(registerRequest.username())
+        return userRepository.findByUsername(registerRequest.username())
                 .flatMap(existingUser -> Mono.error(new DuplicatedUsernameException("Username already exists")))
                 .switchIfEmpty(Mono.defer(() -> {
                     String encodedPassword = passwordEncoder.encode(registerRequest.password());
