@@ -42,64 +42,64 @@ class AuthControllerTest extends MockTestSupport {
     @DisplayName("회원가입 시 유효한 데이터를 입력하면 정상적으로 회원가입에 성공한다.")
     @Test
     void register_WithValidData_ShouldReturnOk() {
-            // Given
-            UserRegisterRequest registerDto = UserRegisterRequest.builder()
-                            .username("testuser")
-                            .password("password123")
-                            .email("test@example.com")
-                            .role("LAB")
-                            .build();
+        // Given
+        UserRegisterRequest registerDto = UserRegisterRequest.builder()
+                        .username("testuser")
+                        .password("password123")
+                        .email("test@example.com")
+                        .role("LAB")
+                        .build();
 
-            User savedUser = User.builder()
-                            .username(registerDto.username())
-                            .email(registerDto.email())
-                            .role(valueOf(registerDto.role()))
-                            .build();
+        User savedUser = User.builder()
+                        .username(registerDto.username())
+                        .email(registerDto.email())
+                        .role(valueOf(registerDto.role()))
+                        .build();
 
-            when(authService.register(any(UserRegisterRequest.class)))
-                            .thenReturn(Mono.just(new UserRegisterResponse(savedUser.getUsername())));
+        when(authService.register(any(UserRegisterRequest.class)))
+                        .thenReturn(Mono.just(new UserRegisterResponse(savedUser.getUsername())));
 
 
-            // When & Then
-            webTestClient.post()
-                        .uri("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .bodyValue(registerDto)
-                        .exchange()
-                        .expectStatus().isOk()
-                        .expectBody()
-                        .jsonPath("$.username").isEqualTo(registerDto.username());
+        // When & Then
+        webTestClient.post()
+                    .uri("/api/auth/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(registerDto)
+                    .exchange()
+                    .expectStatus().isOk()
+                    .expectBody()
+                    .jsonPath("$.username").isEqualTo(registerDto.username());
     }
 
     @DisplayName("회원가입 시 유효하지 않은 데이터를 입력하면 예외가 발생한다.")
     @Test
     void register_WithInvalidData_ShouldReturnBadRequest() {
-            // Given
-            UserRegisterRequest invalidDto = UserRegisterRequest.builder()
-                            .username("")
-                            .password("123")
-                            .email("invalid-email")
-                            .role("LAB")
-                            .build();
+        // Given
+        UserRegisterRequest invalidReq = UserRegisterRequest.builder()
+                        .username("")
+                        .password("123")
+                        .email("invalid-email")
+                        .role("LAB")
+                        .build();
 
-            // When & Then
-            webTestClient.post()
-                            .uri("/api/auth/register")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .bodyValue(invalidDto)
-                            .exchange()
-                            .expectStatus().isBadRequest();
+        // When & Then
+        webTestClient.post()
+                        .uri("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(invalidReq)
+                        .exchange()
+                        .expectStatus().isBadRequest();
     }
 
     @DisplayName("로그인 시 유효한 데이터를 입력하면 정상적으로 로그인에 성공한다.")
     @Test
     void login_WithValidCredentials_ShouldReturnOk() {
         // Given
-        LoginRequest loginRequest = new LoginRequest("testuser",
+        LoginRequest loginReq = new LoginRequest("testuser",
                                                         "password123");
 
         LoginResponse loginResponse = LoginResponse.from(UserResponse.builder()
-                .username(loginRequest.username())
+                .username(loginReq.username())
                 .role(LAB)
                 .build(), null);
 
@@ -110,11 +110,11 @@ class AuthControllerTest extends MockTestSupport {
         webTestClient.post()
                     .uri("/api/auth/login")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(loginRequest)
+                    .bodyValue(loginReq)
                     .exchange()
                     .expectStatus().isOk()
                     .expectBody()
-                    .jsonPath("$.username").isEqualTo(loginRequest.username())
+                    .jsonPath("$.username").isEqualTo(loginReq.username())
                     .jsonPath("$.role").isEqualTo("LAB");
     }
 

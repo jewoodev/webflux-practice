@@ -2,9 +2,9 @@ package com.heri2go.chat.web.util;
 
 
 import com.heri2go.chat.domain.user.Role;
-import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.service.auth.JwtService;
+import com.heri2go.chat.web.service.user.response.UserResponse;
 
 public class TestJwtTokenUtil {
     private final JwtService jwtService;
@@ -18,12 +18,12 @@ public class TestJwtTokenUtil {
     }
 
     public UserDetailsImpl createTestUserDetails(String username) {
-        User user = User.builder()
+        UserResponse userResp = UserResponse.builder()
                 .username(username)
                 .password("password")
                 .role(Role.LAB)
                 .build();
-        return new UserDetailsImpl(user);
+        return new UserDetailsImpl(userResp);
     }
 
     public String getAuthorizationHeader(String username) {

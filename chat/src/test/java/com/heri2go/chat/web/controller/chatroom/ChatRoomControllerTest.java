@@ -2,12 +2,11 @@ package com.heri2go.chat.web.controller.chatroom;
 
 import com.heri2go.chat.MockTestSupport;
 import com.heri2go.chat.domain.user.Role;
-import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.controller.chatroom.request.ChatRoomCreateRequest;
-import com.heri2go.chat.web.service.chat.ChatService;
 import com.heri2go.chat.web.service.chatroom.ChatRoomService;
 import com.heri2go.chat.web.service.chatroom.response.ChatRoomResponse;
+import com.heri2go.chat.web.service.user.response.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,9 +33,6 @@ class ChatRoomControllerTest extends MockTestSupport {
     @Mock
     private ChatRoomService chatRoomService;
 
-    @Mock 
-    private ChatService chatService;
-
     @InjectMocks
     private ChatRoomController chatRoomController;
 
@@ -54,7 +50,7 @@ class ChatRoomControllerTest extends MockTestSupport {
         String testUsername = "testuser";
 
         UserDetailsImpl testUserDetails = new UserDetailsImpl(
-                User.builder()
+                UserResponse.builder()
                         .username(testUsername)
                         .role(Role.LAB)
                         .build());

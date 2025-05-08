@@ -3,11 +3,11 @@ package com.heri2go.chat.web.service.chat;
 import com.heri2go.chat.MockTestSupport;
 import com.heri2go.chat.domain.chat.Chat;
 import com.heri2go.chat.domain.chat.ChatRepository;
-import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
 import com.heri2go.chat.web.exception.ResourceNotFoundException;
 import com.heri2go.chat.web.service.chat.response.ChatResponse;
+import com.heri2go.chat.web.service.user.response.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -75,7 +75,7 @@ class ChatServiceTest extends MockTestSupport {
     @Test
     void getByRoomNum_validRoomNum_shouldReturnChatMessageRespFlux() {
         // Given
-        UserDetailsImpl testUser = new UserDetailsImpl(User.builder().username("testUser").build());
+        UserDetailsImpl testUser = new UserDetailsImpl(UserResponse.builder().username("testUser").build());
         when(chatRepository.findByRoomId("101"))
                 .thenReturn(Flux.just(sampleChat));
 
@@ -94,7 +94,7 @@ class ChatServiceTest extends MockTestSupport {
     @Test
     void getEmptyChat_IfNonChatRoomIsQueried() {
         // Given
-        UserDetailsImpl testUser = new UserDetailsImpl(User.builder().username("testUser").build());
+        UserDetailsImpl testUser = new UserDetailsImpl(UserResponse.builder().username("testUser").build());
 
         // When
         when(chatRepository.findByRoomId("999"))

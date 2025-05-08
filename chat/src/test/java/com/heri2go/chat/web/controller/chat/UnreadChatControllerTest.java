@@ -2,10 +2,10 @@ package com.heri2go.chat.web.controller.chat;
 
 import com.heri2go.chat.MockTestSupport;
 import com.heri2go.chat.domain.user.Role;
-import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.service.chat.UnreadChatService;
 import com.heri2go.chat.web.service.chat.response.UnreadChatResponse;
+import com.heri2go.chat.web.service.user.response.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ class UnreadChatControllerTest extends MockTestSupport {
     void userCanGetUnreadChatsInfo() {
         // given
         UserDetailsImpl userDetails = new UserDetailsImpl(
-                User.builder()
+                UserResponse.builder()
                         .username("test")
                         .role(Role.LAB)
                         .build());

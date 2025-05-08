@@ -5,7 +5,6 @@ import com.heri2go.chat.domain.chatroom.ChatRoom;
 import com.heri2go.chat.domain.chatroom.ChatRoomParticipant;
 import com.heri2go.chat.domain.chatroom.ChatRoomParticipantRepository;
 import com.heri2go.chat.domain.chatroom.ChatRoomRepository;
-import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.controller.chatroom.request.ChatRoomCreateRequest;
 import com.heri2go.chat.web.service.chatroom.response.ChatRoomResponse;
@@ -50,7 +49,7 @@ class ChatRoomServiceTest extends MockTestSupport {
         String testUsername = "user2";
 
         UserDetailsImpl testUser = new UserDetailsImpl(
-                User.builder()
+                UserResponse.builder()
                         .username(testUsername)
                         .role(LAB)
                         .build());
@@ -112,7 +111,7 @@ class ChatRoomServiceTest extends MockTestSupport {
     @Test
     void chatRoom_isCreated_when_order_isCreated() {
         // given
-        UserResponse userResponse = UserResponse.builder()
+        UserResponse userResp = UserResponse.builder()
                 .username("test user")
                 .password("encodedPassword")
                 .role(LAB)
@@ -128,7 +127,7 @@ class ChatRoomServiceTest extends MockTestSupport {
                 .build();
 
         // when
-        when(userService.getById(any(String.class))).thenReturn(Mono.just(userResponse));
+        when(userService.getById(any(String.class))).thenReturn(Mono.just(userResp));
         when(chatRoomRepository.save(any(ChatRoom.class))).thenReturn(Mono.just(ChatRoom.from(createRequestStartedWithOrder)));
 
         // then

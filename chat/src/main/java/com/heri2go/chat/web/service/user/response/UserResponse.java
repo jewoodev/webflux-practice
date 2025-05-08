@@ -7,8 +7,10 @@ import lombok.Builder;
 
 @Builder
 public record UserResponse(
+        @JsonIgnore String id,
         String username,
         @JsonIgnore String password,
+        String email,
         Role role
 ) {
     public static UserResponse from(User user) {

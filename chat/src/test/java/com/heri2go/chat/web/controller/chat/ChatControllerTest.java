@@ -3,10 +3,10 @@ package com.heri2go.chat.web.controller.chat;
 import com.heri2go.chat.MockTestSupport;
 import com.heri2go.chat.domain.chat.Chat;
 import com.heri2go.chat.domain.user.Role;
-import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.service.chat.ChatService;
 import com.heri2go.chat.web.service.chat.response.ChatResponse;
+import com.heri2go.chat.web.service.user.response.UserResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -50,7 +50,7 @@ class ChatControllerTest extends MockTestSupport {
         String testUsername = "Lab staff 2";
 
         UserDetailsImpl testUserDetails = new UserDetailsImpl(
-                User.builder()
+                UserResponse.builder()
                         .username(testUsername)
                         .role(Role.LAB)
                         .build());
