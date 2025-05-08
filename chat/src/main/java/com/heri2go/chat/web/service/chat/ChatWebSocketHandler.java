@@ -1,10 +1,8 @@
 package com.heri2go.chat.web.service.chat;
 
-import com.heri2go.chat.domain.chatroom.ChatRoom;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.util.chat.ChatConverter;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
-import com.heri2go.chat.web.exception.ResourceNotFoundException;
 import com.heri2go.chat.web.service.chatroom.ChatRoomService;
 import com.heri2go.chat.web.service.session.ConnectInfoProvider;
 import com.heri2go.chat.web.service.session.RedisSessionManager;
@@ -16,7 +14,6 @@ import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.socket.CloseStatus;
 import org.springframework.web.reactive.socket.WebSocketHandler;
@@ -24,7 +21,6 @@ import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Mono;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -62,32 +58,20 @@ public class ChatWebSocketHandler implements WebSocketHandler {
 
     @Override
     public Mono<Void> handle(WebSocketSession session) {
-        // 1. SecurityContext에서 인증된 사용자 정보 추출
         return ReactiveSecurityContextHolder.getContext()
                 .map(SecurityContext::getAuthentication)
                 .map(Authentication::getPrincipal)
                 .cast(UserDetailsImpl.class)
                 .flatMap(userDetails -> {
-                    // 2. 쿼리 파라미터에서 roomName 추출
-                    String roomId = extractRoomId(session);
-                    if (roomId == null) {
-                        return session.close(CloseStatus.BAD_DATA.withReason("Room ID is required"));
-                    }
-
-                    // 3. 채팅방 참여자 확인
-                    return chatRoomService.getById(roomId)
-                            .switchIfEmpty(Mono.defer(() ->
-                                            session.close(CloseStatus.BAD_DATA.withReason("Chat room not found"))
-                                                    .then(Mono.error(new ResourceNotFoundException("Chat room not found")))))
+                    // 세션 저장
+                    sessions.put(session.getId(), session);
+                    
+                    // 사용자의 모든 채팅방 구독
+                    return chatRoomService.getOwnChatRoomResponse(userDetails)
                             .flatMap(chatRoom -> {
-                                if (!chatRoom.getParticipantIds().contains(userDetails.getUserId())) {
-                                    return session.close(CloseStatus.POLICY_VIOLATION.withReason("User is not a member of this room"));
-                                }
-
-                                // 4. 연결 허용 및 세션 관리
-                                sessions.put(session.getId(), session);
-                                return handleWebSocketSession(session, userDetails, chatRoom);
-                            });
+                                return sessionManager.saveSession(session.getId(), chatRoom.id(), userDetails.getUsername());
+                            })
+                            .then(handleMessage(session)); // 실시간 메세지 처리 방식 정의
                 })
                 .onErrorResume(e -> {
                     log.error("WebSocket connection error", e);
@@ -95,16 +79,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                 });
     }
 
-    private String extractRoomId(WebSocketSession session) {
-        return Arrays.stream(session.getHandshakeInfo().getUri().getQuery()
-                .split("&"))
-                .filter(param -> param.startsWith("roomId="))
-                .map(param -> param.substring("roomId=".length()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private Mono<Void> handleWebSocketSession(WebSocketSession session, UserDetails userDetails, ChatRoom chatRoom) {
+    private Mono<Void> handleMessage(WebSocketSession session) {
         return session.receive()
                 .map(WebSocketMessage::getPayloadAsText)
                 .flatMap(payload -> handleIncomingMessage(session, payload))
