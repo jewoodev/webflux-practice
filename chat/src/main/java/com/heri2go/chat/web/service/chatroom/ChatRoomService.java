@@ -1,6 +1,7 @@
 package com.heri2go.chat.web.service.chatroom;
 
 import com.heri2go.chat.domain.chatroom.ChatRoom;
+import com.heri2go.chat.domain.chatroom.ChatRoomParticipant;
 import com.heri2go.chat.domain.chatroom.ChatRoomParticipantRepository;
 import com.heri2go.chat.domain.chatroom.ChatRoomRepository;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
@@ -30,7 +31,12 @@ public class ChatRoomService {
                         return Mono.error(new UserNotFoundException("One or more participants not found"));
                     }
                     return chatRoomRepository.save(ChatRoom.from(request))
-                            .map(ChatRoomResponse::from);
+                            .flatMap(chatRoom -> 
+                                Flux.fromIterable(users)
+                                    .map(user -> ChatRoomParticipant.from(user, chatRoom.getId()))
+                                    .flatMap(chatRoomParticipantRepository::save)
+                                    .then(Mono.just(ChatRoomResponse.from(chatRoom)))
+                            );
                 });
     }
 
