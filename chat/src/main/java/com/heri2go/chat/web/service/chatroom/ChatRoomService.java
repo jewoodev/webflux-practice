@@ -20,6 +20,7 @@ public class ChatRoomService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
+    private final ChatRoomParticipantService chatRoomParticipantService;
     private final UserService userService;
 
     public Mono<ChatRoomResponse> save(ChatRoomCreateRequest request) {
@@ -40,12 +41,8 @@ public class ChatRoomService {
                 });
     }
 
-    public Mono<ChatRoom> getById(String roomId) {
-        return chatRoomRepository.findById(roomId);
-    }
-
     public Flux<ChatRoomResponse> getOwnChatRoomResponse(UserDetailsImpl userDetails) {
-        return chatRoomParticipantRepository.findAllByUsername(userDetails.getUsername())
+        return chatRoomParticipantService.getAllByUserId(userDetails.getUserId())
                 .flatMap(chatRoomParticipant ->
                         chatRoomRepository.findById(chatRoomParticipant.getChatRoomId())
                 .map(ChatRoomResponse::from));

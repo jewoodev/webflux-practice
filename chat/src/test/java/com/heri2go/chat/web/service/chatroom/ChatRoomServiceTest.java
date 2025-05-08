@@ -3,7 +3,6 @@ package com.heri2go.chat.web.service.chatroom;
 import com.heri2go.chat.MockTestSupport;
 import com.heri2go.chat.domain.chatroom.ChatRoom;
 import com.heri2go.chat.domain.chatroom.ChatRoomParticipant;
-import com.heri2go.chat.domain.chatroom.ChatRoomParticipantRepository;
 import com.heri2go.chat.domain.chatroom.ChatRoomRepository;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.controller.chatroom.request.ChatRoomCreateRequest;
@@ -32,7 +31,7 @@ class ChatRoomServiceTest extends MockTestSupport {
     ChatRoomRepository chatRoomRepository;
 
     @Mock
-    ChatRoomParticipantRepository chatRoomParticipantRepository;
+    ChatRoomParticipantService chatRoomParticipantService;
 
     @Mock
     UserService userService;
@@ -93,7 +92,7 @@ class ChatRoomServiceTest extends MockTestSupport {
         //         .build(); bearer 
 
         // when, 유저의 인증 정보를 기반으로 참여 중인 채팅방 식별자를 읽어들이고, 그 식별자를 통해 채팅방 정보를 가져오는 흐름
-        when(chatRoomParticipantRepository.findAllByUsername(testUsername)).thenReturn(Flux.just(chatRoomParticipant));
+        when(chatRoomParticipantService.getAllByUserId(testUsername)).thenReturn(Flux.just(chatRoomParticipant));
         when(chatRoomRepository.findById(anyString())).thenReturn(Mono.just(chatRoom1));
 
         // then
