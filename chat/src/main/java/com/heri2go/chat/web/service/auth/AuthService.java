@@ -36,10 +36,10 @@ public class AuthService {
                                     UserRegisterRequest.withEncodedPassword(registerRequest, encodedPassword)));
                 }))
                 .cast(User.class)
-                .flatMap(user -> {
-                    return userRepository.save(user)
-                            .map(savedUser -> new UserRegisterResponse(user.getUsername()));
-                });
+                .flatMap(user -> userRepository.save(user)
+                            .map(savedUser -> new UserRegisterResponse(user.getUsername())
+                            )
+                );
     }
 
     public Mono<LoginResponse> login(LoginRequest loginRequest) {
@@ -47,6 +47,7 @@ public class AuthService {
 
         return userService.getByUsername(loginRequest.username())
                 .filter(user -> passwordEncoder.matches(loginRequest.password(), user.password()))
+                .onErrorResume(UserNotFoundException -> Mono.error(new BadCredentialsException("Invalid username or password.")))
                 .switchIfEmpty(Mono.error(new BadCredentialsException("Invalid username or password.")))
                 .map(user -> {
                     String token = jwtService.generateToken(user.username());
