@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,8 @@ public class Chat {
     private String content;
     private String sender;
     private Set<String> unreadUsernames;
+
+    @Indexed
     private String roomId;
     private String lang; // 채팅을 작성한 유저가 사용한 언어
     private Double sentimentScore;
