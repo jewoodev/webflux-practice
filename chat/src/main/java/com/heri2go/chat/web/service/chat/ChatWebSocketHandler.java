@@ -76,7 +76,8 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                                                     .flatMap(chatConverter::convertToJson)
                                                     .flatMap(json -> sendMessageToSession(session.getId(), json))
                                                     .then(Mono.empty())
-                            ))
+                                            )
+                            )
                             .then(handleMessageAndDisconnect(session, userDetails)); // 실시간 메세지 처리 방식, 연결 끊김 시 처리 방식 정의
                 })
                 .onErrorResume(e -> {
@@ -105,7 +106,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                 .flatMap(chatMessage -> {
                     switch (chatMessage.type()) {
                         case ENTER:
-                            return handleEnterMessage(session, chatMessage);
+                            return handleEnterMessage(chatMessage);
                         case LEAVE:
                             return handleLeaveMessage(session, chatMessage);
                         case TALK:
@@ -120,11 +121,8 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                 });
     }
 
-    private Mono<Void> handleEnterMessage(WebSocketSession session, ChatCreateRequest message) {
-        return sessionManager.saveSession(session.getId(),
-                message.roomId(),
-                message.sender())
-                .then(publishMessage(message));
+    private Mono<Void> handleEnterMessage(ChatCreateRequest message) {
+        return publishMessage(message);
     }
 
     private Mono<Void> handleLeaveMessage(WebSocketSession session, ChatCreateRequest message) {
