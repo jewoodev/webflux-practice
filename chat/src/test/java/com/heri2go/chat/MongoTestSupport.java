@@ -12,8 +12,9 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("test")
 @DataMongoTest
 public abstract class MongoTestSupport {
+
     @Autowired
-    protected ReactiveMongoTemplate reactiveMongoTemplate;
+    protected ReactiveMongoTemplate mongoTemplate;
 
     @Autowired
     protected ChatRepository chatRepository;

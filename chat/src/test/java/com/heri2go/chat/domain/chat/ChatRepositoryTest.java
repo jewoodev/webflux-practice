@@ -14,8 +14,8 @@ class ChatRepositoryTest extends MongoTestSupport {
     
     @AfterEach
     public void tearDown() {
-        reactiveMongoTemplate.dropCollection(Chat.class)
-                .then(reactiveMongoTemplate.createCollection(Chat.class))
+        mongoTemplate.dropCollection(Chat.class)
+                .then(mongoTemplate.createCollection(Chat.class))
                 .block();
     }
 

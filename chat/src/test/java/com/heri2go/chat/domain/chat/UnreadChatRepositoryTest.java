@@ -10,8 +10,8 @@ class UnreadChatRepositoryTest extends MongoTestSupport {
 
     @AfterEach
     void tearDown() {
-        reactiveMongoTemplate.dropCollection(UnreadChat.class)
-                .then(reactiveMongoTemplate.createCollection(UnreadChat.class))
+        mongoTemplate.dropCollection(UnreadChat.class)
+                .then(mongoTemplate.createCollection(UnreadChat.class))
                 .block();
     }
 
@@ -19,11 +19,13 @@ class UnreadChatRepositoryTest extends MongoTestSupport {
     @Test
     void unreadChatsCanRefered_throughUnreadUsername() {
         // given // when
-        String testUnreadUsername = "Test Unread Username";
+        String testUnreadUsername = "Test username who don't read chat";
+        String testChatId = "Test chat id";
+        String testSender = "Test sender";
         UnreadChat testUnreadChat = UnreadChat.builder()
-                .chatId("Test Chat Id")
+                .chatId(testChatId)
                 .unreadUsername(testUnreadUsername)
-                .sender("Test Sender")
+                .sender(testSender)
                 .build();
 
         unreadChatRepository.save(testUnreadChat)
@@ -31,9 +33,11 @@ class UnreadChatRepositoryTest extends MongoTestSupport {
 
         // then
         StepVerifier.create(unreadChatRepository.findAllByUnreadUsername(testUnreadUsername))
-                .expectNextMatches(unreadChat -> unreadChat.getUnreadUsername().equals(testUnreadUsername)
-                        && unreadChat.getChatId().equals("Test Chat Id")
-                        && unreadChat.getSender().equals("Test Sender"))
+                .expectNextMatches(unreadChat ->
+                        unreadChat.getUnreadUsername().equals(testUnreadUsername)
+                        && unreadChat.getChatId().equals(testChatId)
+                        && unreadChat.getSender().equals(testSender)
+                )
                 .verifyComplete();
     }
 }

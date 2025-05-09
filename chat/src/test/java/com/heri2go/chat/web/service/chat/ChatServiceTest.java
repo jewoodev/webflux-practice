@@ -1,92 +1,86 @@
 package com.heri2go.chat.web.service.chat;
 
-import com.heri2go.chat.MockTestSupport;
+import com.heri2go.chat.IntegrationTestSupport;
 import com.heri2go.chat.domain.chat.Chat;
-import com.heri2go.chat.domain.chat.ChatRepository;
+import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
+import com.heri2go.chat.web.controller.auth.request.UserRegisterRequest;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
 import com.heri2go.chat.web.exception.ResourceNotFoundException;
-import com.heri2go.chat.web.service.chat.response.ChatResponse;
-import com.heri2go.chat.web.service.user.response.UserResponse;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.time.LocalDateTime;
 import java.util.Set;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+class ChatServiceTest extends IntegrationTestSupport {
 
-class ChatServiceTest extends MockTestSupport {
-
-    @Mock
-    private ChatRepository chatRepository;
-
-    @InjectMocks
-    private ChatService chatService;
-
-    private Chat sampleChat;
-    private ChatCreateRequest sampleReq;
-    private final String testUsername = "testUser";
+    private ChatCreateRequest validChatCreateRequest;
+    private UserRegisterRequest validRegisterRequest;
+    private UserDetailsImpl userDetails;
+    private final String testUsername = "Test usename";
+    private final String testPassword = "Test password";
     private final String testRoomId = "101";
+    private final String chatContent = "Hello, WebFlux!";;
 
     @BeforeEach
     void setUp() {
-        // 테스트용 샘플 데이터 생성
-        sampleChat = Chat.builder()
-                .sender(testUsername)
-                .content("Hello, WebFlux!")
-                .roomId(testRoomId)
-                .unreadUsernames(Set.of(testUsername))
-                .lang("en")
-                .createdAt(LocalDateTime.now())
+        validRegisterRequest = UserRegisterRequest.builder()
+                .username(testUsername)
+                .password(testPassword)
+                .email("test@example.com")
+                .role("LAB")
                 .build();
 
-        sampleReq = ChatCreateRequest.builder()
+        userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
+                .then(userDetailsService.findByUsername(testUsername))
+                .block();
+
+
+        validChatCreateRequest = ChatCreateRequest.builder()
+                .content(chatContent)
                 .sender(testUsername)
-                .content("Hello, WebFlux!")
                 .unreadUsernames(Set.of(testUsername))
                 .roomId(testRoomId)
                 .lang("en")
                 .build();
     }
 
-    @DisplayName("정상적인 메세지를 저장하면 정상적으로 응답 Dto를 돌려받는다.")
-    @Test
-    void save_validMessage_shouldReturnChatMessageResp() {
-        // Given // When
-        when(chatRepository.save(any(Chat.class))).thenReturn(Mono.just(sampleChat));
+    @AfterEach
+    void tearDown() {
+        mongoTemplate.dropCollection(Chat.class)
+                .then(mongoTemplate.createCollection(Chat.class))
+                .then(mongoTemplate.dropCollection(User.class))
+                .then(mongoTemplate.createCollection(User.class))
+                .then(redisDao.delete("user::" + testUsername))
+                .block();
+    }
 
-        // Then
-        StepVerifier.create(chatService.save(sampleReq))
-                .expectNextMatches(chat -> chat.getRoomId().equals(sampleReq.roomId()) &&
-                        chat.getSender().equals(sampleReq.sender()) &&
-                        chat.getContent().equals(sampleReq.content()))
+    @DisplayName("유효한 메세지 저장 요청을 받으면 저장에 성공하고 응답 dto를 반환한다.")
+    @Test
+    void saveSuccessfulThroughValidRequest() {
+        //Given //When // Then
+        StepVerifier.create(chatService.save(validChatCreateRequest))
+                .expectNextMatches(chat -> chat.getRoomId().equals(validChatCreateRequest.roomId()) &&
+                        chat.getSender().equals(validChatCreateRequest.sender()) &&
+                        chat.getContent().equals(validChatCreateRequest.content()))
                 .verifyComplete();
     }
 
-    @DisplayName("유효한 채팅방 번호로 조회되는 채팅들이 정상적으로 조회된다.")
+    @DisplayName("유저는 자신이 참여 중이며 존재하는 채팅방의 채팅들은 조회할 수 있다.")
     @Test
-    void getByRoomNum_validRoomNum_shouldReturnChatMessageRespFlux() {
+    void userCanGetChat__whatValid_andTheyParticipatedIn() {
         // Given
-        UserDetailsImpl testUser = new UserDetailsImpl(UserResponse.builder().username("testUser").build());
-        when(chatRepository.findByRoomId("101"))
-                .thenReturn(Flux.just(sampleChat));
+        chatService.save(validChatCreateRequest)
+                .block();
 
-        // When
-        Flux<ChatResponse> result = chatService.getByRoomIdToInvited("101", testUser);
-
-        // Then
-        StepVerifier.create(result)
+        // When // Then
+        StepVerifier.create(chatService.getByRoomIdToInvited(testRoomId, userDetails))
                 .expectNextMatches(resp -> resp.roomId().equals(testRoomId) &&
                         resp.sender().equals(testUsername) &&
-                        resp.content().equals("Hello, WebFlux!"))
+                        resp.content().equals(chatContent))
                 .verifyComplete();
     }
 
@@ -94,14 +88,11 @@ class ChatServiceTest extends MockTestSupport {
     @Test
     void getEmptyChat_IfNonChatRoomIsQueried() {
         // Given
-        UserDetailsImpl testUser = new UserDetailsImpl(UserResponse.builder().username("testUser").build());
-
-        // When
-        when(chatRepository.findByRoomId("999"))
-                .thenReturn(Flux.empty());
+        chatService.save(validChatCreateRequest)
+                .block();
 
         // Then
-        StepVerifier.create(chatService.getByRoomIdToInvited("999", testUser))
+        StepVerifier.create(chatService.getByRoomIdToInvited("999", userDetails))
                 .expectError(ResourceNotFoundException.class)
                 .verify();
     }
