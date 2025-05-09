@@ -1,7 +1,6 @@
 package com.heri2go.chat.web.controller.chat;
 
 import com.heri2go.chat.MockTestSupport;
-import com.heri2go.chat.domain.user.Role;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.service.chat.UnreadChatService;
 import com.heri2go.chat.web.service.chat.response.UnreadChatResponse;
@@ -17,6 +16,7 @@ import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 
+import static com.heri2go.chat.domain.user.Role.LAB;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -41,17 +41,17 @@ class UnreadChatControllerTest extends MockTestSupport {
         // given
         UserDetailsImpl userDetails = new UserDetailsImpl(
                 UserResponse.builder()
-                        .username("test")
-                        .role(Role.LAB)
+                        .username("Test username")
+                        .role(LAB)
                         .build());
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
-                userDetails.getAuthorities());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
         UnreadChatResponse unreadChatResponse = UnreadChatResponse.builder()
-                .chatId("Test Chat Id")
-                .unreadUsername("Test Unread Username")
-                .sender("Test Sender")
+                .chatId("Test chat id")
+                .unreadUsername("Test username what don't read")
+                .sender("Test sender")
+                .content("Test content")
                 .build();
 
         // when

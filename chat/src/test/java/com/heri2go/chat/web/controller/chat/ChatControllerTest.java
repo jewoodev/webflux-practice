@@ -2,7 +2,6 @@ package com.heri2go.chat.web.controller.chat;
 
 import com.heri2go.chat.MockTestSupport;
 import com.heri2go.chat.domain.chat.Chat;
-import com.heri2go.chat.domain.user.Role;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.service.chat.ChatService;
 import com.heri2go.chat.web.service.chat.response.ChatResponse;
@@ -23,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+import static com.heri2go.chat.domain.user.Role.LAB;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -43,37 +43,26 @@ class ChatControllerTest extends MockTestSupport {
             webTestClient = WebTestClient.bindToController(chatController).build();
     }
 
-    @DisplayName("유저는 초대된 채팅방에만 접속할 수 있다.")
+    @DisplayName("유저는 초대된 채팅방의 채팅만 조회할 수 있다.")
     @Test
-    void canGetChatWhenUserIsInvitedToChatRoom() {
+    void userCanGetChatWhenUserIsInvitedToChatRoom() {
         // given
         String testUsername = "Lab staff 2";
 
-        UserDetailsImpl testUserDetails = new UserDetailsImpl(
+        UserDetailsImpl userDetails = new UserDetailsImpl(
                 UserResponse.builder()
                         .username(testUsername)
-                        .role(Role.LAB)
+                        .role(LAB)
                         .build());
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                testUserDetails, null, testUserDetails.getAuthorities());
-
-        // 전제되는 채팅방
-        // ChatRoom testChatRoom = ChatRoom.builder()
-        //                 .roomName("Test room name")
-        //                 .orderId("Test order id")
-        //                 .participantIds(Set.of("Lab chief", "Lab staff 1", "Lab staff 2", "Dentist"))
-        //                 .lastMessage("last message")
-        //                 .lastSender("last sender")
-        //                 .lastMessageTime(NOW.minusHours(1))
-        //                 .build();
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
         Chat testChat = Chat.builder()
-                        .content("Test content")
-                        .sender("Test sender")
+                        .content("Test chat content")
+                        .sender("Test chat sender")
                         .unreadUsernames(Set.of("Lab chief", "Lab staff 1", "Lab staff 2", "Dentist"))
-                        .roomId("Test_room_id")
-                        .lang("Test lang")
+                        .roomId("Test room id")
+                        .lang("Test chat lang")
                         .sentimentScore(0.0)
                         .createdAt(NOW)
                         .build();
@@ -90,7 +79,7 @@ class ChatControllerTest extends MockTestSupport {
                                             .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication)))
                     .build()
                     .get()
-                    .uri("/api/chat/{roomName}", encodedRoomId)
+                    .uri("/api/chat/{roomId}", encodedRoomId)
                     .exchange()
                     .expectStatus().isOk()
                     .expectBodyList(ChatResponse.class)

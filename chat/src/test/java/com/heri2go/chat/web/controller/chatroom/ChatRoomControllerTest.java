@@ -28,7 +28,7 @@ import static org.mockito.Mockito.when;
 class ChatRoomControllerTest extends MockTestSupport {
 
     private WebTestClient webTestClient;
-    private static final LocalDateTime NOW = LocalDateTime.now();
+    private static final LocalDateTime NOW = LocalDateTime.now().withNano(0);
 
     @Mock
     private ChatRoomService chatRoomService;
@@ -45,28 +45,27 @@ class ChatRoomControllerTest extends MockTestSupport {
 
     @DisplayName("각 사용자는 자신이 참여 중인 채팅방에 대한 정보들을 조회할 수 있다.")
     @Test
-    void userCanGetChatRoomInfoThroughAuthentication() {
+    void userCanGetChatRoomInfo_ThroughAuthentication() {
         // given
-        String testUsername = "testuser";
+        String testUsername = "Test username";
 
-        UserDetailsImpl testUserDetails = new UserDetailsImpl(
+        UserDetailsImpl userDetails = new UserDetailsImpl(
                 UserResponse.builder()
                         .username(testUsername)
                         .role(Role.LAB)
                         .build());
 
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                testUserDetails, null, testUserDetails.getAuthorities());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
         // when
         when(chatRoomService.getOwnChatRoomResponse(any(UserDetailsImpl.class)))
                 .thenReturn(
                     Flux.just(
                         ChatRoomResponse.builder()
-                                    .roomName("test chat room")
-                                    .participantIds(Set.of(testUsername, "user2"))
-                                    .lastMessage("last message")
-                                    .lastSender("last sender")
+                                    .roomName("Test chat room")
+                                    .participantIds(Set.of(testUsername, "Test username 2"))
+                                    .lastMessage("Test last message of chat room")
+                                    .lastSender("last sender of chat room")
                                     .lastMessageTime(LocalDateTime.now().minusHours(1))
                                     .build()
                     )
@@ -87,44 +86,51 @@ class ChatRoomControllerTest extends MockTestSupport {
     
     @DisplayName("주문이 생성되면 채팅방이 생성된다.")
     @Test
-    void chatRoom_iscreated_when_order_isCreated() {
+    void chatRoom_isCreated_whenOrder_isCreated() {
         // given
-        ChatRoomCreateRequest requestedStartedWithOrder = ChatRoomCreateRequest.builder()
-                .orderId("Test order id")
-                .roomName("Test room name")
+        String testOrderId = "Test order id";
+        String testRoomName = "Test room name";
+        String lastMessage = "Test last message";
+        String lastSender = "Test last sender";
+
+        ChatRoomCreateRequest requestFromOrder = ChatRoomCreateRequest.builder()
+                .orderId(testOrderId)
+                .roomName(testRoomName)
                 .participantIds(Set.of("Lab chief", "Lab staff 1", "Lab staff 2"))
-                .lastMessage("last message")
-                .lastSender("last sender")
+                .lastMessage(lastMessage)
+                .lastSender(lastSender)
                 .lastMessageTime(NOW.minusHours(1))
                 .build();
 
-        ChatRoomResponse response = ChatRoomResponse.builder()
-                                                .roomName("Test room name")
-                                                .orderId("Test order id")
-                                                .participantIds(Set.of("Lab chief", "Lab staff 1", "Lab staff 2", "Dentist"))
-                                                .lastMessage("last message")
-                                                .lastSender("last sender")
-                                                .lastMessageTime(NOW.minusHours(1))
-                                                .build();
-
         // when
-        when(chatRoomService.save(requestedStartedWithOrder))
-                .thenReturn(Mono.just(response));
+        Set<String> testParticipantIds = Set.of("Lab chief", "Lab staff 1", "Lab staff 2", "Dentist");
+        when(chatRoomService.save(requestFromOrder)).thenReturn(Mono.just(
+                ChatRoomResponse.builder()
+                        .orderId(testOrderId)
+                        .roomName(testRoomName)
+                        .participantIds(testParticipantIds)
+                        .lastMessage(lastMessage)
+                        .lastSender(lastSender)
+                        .lastMessageTime(NOW.minusHours(1))
+                        .build()
+        ));
 
         // then
         webTestClient.post()
                 .uri("/api/chat-room/create")
-                .bodyValue(requestedStartedWithOrder)
+                .bodyValue(requestFromOrder)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ChatRoomResponse.class)
-                .isEqualTo(ChatRoomResponse.builder()
-                        .roomName("Test room name")
-                        .orderId("Test order id")
-                        .participantIds(Set.of("Lab chief", "Lab staff 1", "Lab staff 2", "Dentist"))
-                        .lastMessage("last message")
-                        .lastSender("last sender")
-                        .lastMessageTime(NOW.minusHours(1))
-                        .build());
+                .isEqualTo(
+                        ChatRoomResponse.builder()
+                                        .roomName(testRoomName)
+                                        .orderId(testOrderId)
+                                        .participantIds(testParticipantIds)
+                                        .lastMessage(lastMessage)
+                                        .lastSender(lastSender)
+                                        .lastMessageTime(NOW.minusHours(1))
+                                        .build()
+                );
     }
 }
