@@ -79,7 +79,7 @@ class ChatControllerTest extends MockTestSupport {
                                             .contextWrite(ReactiveSecurityContextHolder.withAuthentication(authentication)))
                     .build()
                     .get()
-                    .uri("/api/chat/{roomId}", encodedRoomId)
+                    .uri("/api/chat/{roomId}", testChat.getRoomId())
                     .exchange()
                     .expectStatus().isOk()
                     .expectBodyList(ChatResponse.class)
