@@ -27,18 +27,21 @@ public class AuthService {
     private final JwtService jwtService;
 
     public Mono<UserRegisterResponse> register(UserRegisterRequest registerRequest) {
-        return userRepository.findByUsername(registerRequest.username())
-                .flatMap(existingUser -> Mono.error(new DuplicatedUsernameException("Username already exists")))
-                .switchIfEmpty(Mono.defer(() -> {
-                    String encodedPassword = passwordEncoder.encode(registerRequest.password());
-                    return Mono.just(
-                            User.from(
-                                    UserRegisterRequest.withEncodedPassword(registerRequest, encodedPassword)));
-                }))
-                .cast(User.class)
-                .flatMap(user -> userRepository.save(user)
-                            .map(savedUser -> new UserRegisterResponse(user.getUsername())
-                            )
+        return userRepository.existsByUsername(registerRequest.username())
+                .flatMap(isExist -> {
+                    if (isExist) {
+                        return Mono.error(new DuplicatedUsernameException("Username already exists"));
+                    }
+                    return Mono.just(registerRequest);
+                })
+                .flatMap(request ->
+                        userRepository.save(
+                                User.from(UserRegisterRequest.withEncodedPassword(
+                                        registerRequest,
+                                        passwordEncoder.encode(request.password()))
+                                )
+                        ).
+                        map(user -> new UserRegisterResponse(user.getUsername()))
                 );
     }
 

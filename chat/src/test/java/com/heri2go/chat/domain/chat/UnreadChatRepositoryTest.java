@@ -15,9 +15,9 @@ class UnreadChatRepositoryTest extends MongoTestSupport {
                 .block();
     }
 
-    @DisplayName("읽지 않은 메세지 정보는 읽지 않은 username 값으로 조회할 수 있다.")
+    @DisplayName("'읽지 않은 채팅 정보'는 '유효한 읽지 않은 username' 값으로 조회할 수 있다.")
     @Test
-    void unreadChatsCanRefered_throughUnreadUsername() {
+    void unreadChatsCanReferred_byValidUnreadUsername() {
         // given // when
         String testUnreadUsername = "Test username who don't read chat";
         String testChatId = "Test chat id";
@@ -39,5 +39,26 @@ class UnreadChatRepositoryTest extends MongoTestSupport {
                         && unreadChat.getSender().equals(testSender)
                 )
                 .verifyComplete();
+    }
+
+    @DisplayName("'읽지 않은 채팅 정보'는 '유효하지 않은 읽지 않은 username' 값으로 조회할 수 없다.")
+    @Test
+    void test() {
+        // given // when
+        String testUnreadUsername = "Test username who don't read chat";
+        String testChatId = "Test chat id";
+        String testSender = "Test sender";
+        UnreadChat testUnreadChat = UnreadChat.builder()
+                .chatId(testChatId)
+                .unreadUsername(testUnreadUsername)
+                .sender(testSender)
+                .build();
+
+        unreadChatRepository.save(testUnreadChat)
+                .block();
+
+        // then
+        StepVerifier.create(unreadChatRepository.findAllByUnreadUsername("Wrong username who don't read chat"))
+                .expectComplete();
     }
 }

@@ -2,28 +2,19 @@ package com.heri2go.chat.domain.chat;
 
 import com.heri2go.chat.MongoTestSupport;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
 class ChatRepositoryTest extends MongoTestSupport {
-    
-    @AfterEach
-    public void tearDown() {
-        mongoTemplate.dropCollection(Chat.class)
-                .then(mongoTemplate.createCollection(Chat.class))
-                .block();
-    }
 
-    @DisplayName("방 번호에 알맞은 메시지들을 제공한다.")
-    @Test
-    public void canGetChatMessagesByRoomNum() {
-        // 테스트 데이터 준비
-        LocalDateTime now = LocalDateTime.now();
+    @BeforeEach
+    void setUp() {
+        LocalDateTime now = LocalDateTime.now().withNano(0);
 
         Chat chat1 = Chat.builder()
                 .roomId("1")
@@ -53,15 +44,31 @@ class ChatRepositoryTest extends MongoTestSupport {
         // 데이터 저장
         chatRepository.saveAll(Arrays.asList(chat1, chat2, chat3, chat4))
                 .blockLast();
+    }
 
-        // 테스트 실행
-        Flux<Chat> result = chatRepository.findByRoomId("1");
+    @AfterEach
+    public void tearDown() {
+        mongoTemplate.dropCollection(Chat.class)
+                .then(mongoTemplate.createCollection(Chat.class))
+                .block();
+    }
 
-        // 검증
-        StepVerifier.create(result)
+    @DisplayName("채팅은 유효한 채팅방 id 값으로 조회될 수 있다.")
+    @Test
+    public void chatCanGet_byValidRoomId() {
+        // then
+        StepVerifier.create(chatRepository.findByRoomId("1"))
                 .expectNextMatches(chat -> chat.getContent().equals("첫 번째 메시지"))
                 .expectNextMatches(chat -> chat.getContent().equals("두 번째 메시지"))
                 .expectNextMatches(chat -> chat.getContent().equals("세 번째 메시지"))
                 .verifyComplete();
+    }
+
+    @DisplayName("채팅은 유효하지 채팅방 id 값으로 조회될 수 없다다.")
+    @Test
+    public void chatCanNotGet_byInvalidRoomId() {
+        // then
+        StepVerifier.create(chatRepository.findByRoomId("3"))
+                .expectComplete();
     }
 }
