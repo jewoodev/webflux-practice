@@ -27,19 +27,22 @@ public class AuthService {
     private final JwtService jwtService;
 
     public Mono<UserRegisterResponse> register(UserRegisterRequest registerRequest) {
-        return userRepository.findByUsername(registerRequest.username())
-                .flatMap(existingUser -> Mono.error(new DuplicatedUsernameException("Username already exists")))
-                .switchIfEmpty(Mono.defer(() -> {
-                    String encodedPassword = passwordEncoder.encode(registerRequest.password());
-                    return Mono.just(
-                            User.from(
-                                    UserRegisterRequest.withEncodedPassword(registerRequest, encodedPassword)));
-                }))
-                .cast(User.class)
-                .flatMap(user -> {
-                    return userRepository.save(user)
-                            .map(savedUser -> new UserRegisterResponse(user.getUsername()));
-                });
+        return userRepository.existsByUsername(registerRequest.username())
+                .flatMap(isExist -> {
+                    if (isExist) {
+                        return Mono.error(new DuplicatedUsernameException("Username already exists"));
+                    }
+                    return Mono.just(registerRequest);
+                })
+                .flatMap(request ->
+                        userRepository.save(
+                                User.from(UserRegisterRequest.withEncodedPassword(
+                                        registerRequest,
+                                        passwordEncoder.encode(request.password()))
+                                )
+                        ).
+                        map(user -> new UserRegisterResponse(user.getUsername()))
+                );
     }
 
     public Mono<LoginResponse> login(LoginRequest loginRequest) {
@@ -47,6 +50,7 @@ public class AuthService {
 
         return userService.getByUsername(loginRequest.username())
                 .filter(user -> passwordEncoder.matches(loginRequest.password(), user.password()))
+                .onErrorResume(UserNotFoundException -> Mono.error(new BadCredentialsException("Invalid username or password.")))
                 .switchIfEmpty(Mono.error(new BadCredentialsException("Invalid username or password.")))
                 .map(user -> {
                     String token = jwtService.generateToken(user.username());
