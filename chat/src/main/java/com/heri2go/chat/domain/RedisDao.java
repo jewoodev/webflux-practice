@@ -1,8 +1,11 @@
 package com.heri2go.chat.domain;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.ReactiveSubscription;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -11,14 +14,16 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+@Slf4j
 @RequiredArgsConstructor
 @Component
 public class RedisDao {
 
     private final ReactiveRedisTemplate<String, String> redisTemplate;
+    private final ReactiveRedisMessageListenerContainer listenerContainer;
 
-    public Flux<? extends ReactiveSubscription.Message<String, String>> listenToPattern(String... patterns) {
-        return redisTemplate.listenToPattern(patterns);
+    public Flux<ReactiveSubscription.PatternMessage<String, String, String>> listenToPattern(String pattern) {
+        return listenerContainer.receive(new PatternTopic(pattern));
     }
 
     public Mono<Long> convertAndSend(String destination, String message) {
