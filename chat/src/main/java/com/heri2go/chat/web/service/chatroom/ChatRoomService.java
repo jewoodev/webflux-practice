@@ -6,6 +6,7 @@ import com.heri2go.chat.domain.chatroom.ChatRoomParticipantRepository;
 import com.heri2go.chat.domain.chatroom.ChatRoomRepository;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.controller.chatroom.request.ChatRoomCreateRequest;
+import com.heri2go.chat.web.exception.ChatRoomNotFoundException;
 import com.heri2go.chat.web.exception.UserNotFoundException;
 import com.heri2go.chat.web.service.chatroom.response.ChatRoomResponse;
 import com.heri2go.chat.web.service.user.UserService;
@@ -45,6 +46,7 @@ public class ChatRoomService {
         return chatRoomParticipantService.getAllByUserId(userDetails.getUserId())
                 .flatMap(chatRoomParticipant ->
                         chatRoomRepository.findById(chatRoomParticipant.getChatRoomId())
-                .map(ChatRoomResponse::from));
+                .map(ChatRoomResponse::from))
+                .switchIfEmpty(Mono.error(new ChatRoomNotFoundException("참여 중인 채팅방이 없습니다.")));
     }
 }
