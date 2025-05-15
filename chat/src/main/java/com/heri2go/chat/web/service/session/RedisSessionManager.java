@@ -54,7 +54,7 @@ public class RedisSessionManager {
                         entry -> entry.getValue().toString());
     }
 
-    public Flux<String> getRoomSessions(String roomId) {
-        return redisDao.getAllMembersOfSet(cip.getRoomKey(roomId));
+    public Flux<String> getRoomSessionIds(String roomKey) { // 해당 채팅방에 접속 중인 웹소켓 세션 id 모두를 읽어오는 메서드
+        return redisDao.getAllMembersOfSet(roomKey);
     }
 }

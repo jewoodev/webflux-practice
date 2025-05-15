@@ -19,18 +19,18 @@ import org.springframework.web.reactive.socket.CloseStatus;
 import org.springframework.web.reactive.socket.WebSocketHandler;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.heri2go.chat.web.service.session.ConnectInfoProvider.SERVER_ID;
-
 @Slf4j
 @RequiredArgsConstructor
 @Component
 public class ChatWebSocketHandler implements WebSocketHandler {
+
     private final ChatService chatService;
     private final ChatRoomService chatRoomService;
     private final UnreadChatService unreadChatService;
@@ -45,11 +45,9 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     public void initSubscription() {
         redisDao.listenToPattern(cip.getRoomKey("*"))
                 .doOnError(error -> log.error("Redis subscription error: ", error))
-                .flatMap(message -> {
-                    String channel = message.getChannel();
-                    String roomId = channel.substring(SERVER_ID.length() + 1);
-                    return broadcastToRoom(roomId, message.getMessage());
-                })
+                .flatMap(message ->
+                        broadcastToRoom(message.getChannel(), message.getMessage())
+                )
                 .subscribe();
     }
 
@@ -112,7 +110,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                         case TALK:
                             return handleChatMessage(chatMessage);
                         default:
-                            return Mono.error(new IllegalArgumentException("Unknown content type"));
+                            return Mono.error(new IllegalArgumentException("Unknown content type in Chat"));
                     }
                 })
                 .onErrorResume(e -> {
@@ -132,8 +130,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
 
     private Mono<Void> handleChatMessage(ChatCreateRequest message) {
         return chatService.processMessage(message)
-                .flatMap(jsonMessage -> publishMessage(message))
-                .then();
+                .flatMap(jsonMessage -> publishMessage(message));
     }
 
     private Mono<Void> publishMessage(ChatCreateRequest chatMessage) {
@@ -141,13 +138,13 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                 .flatMap(message -> redisDao.convertAndSend(
                         cip.getRoomKey(chatMessage.roomId()),
                         message))
+                .doOnError(error -> log.error("Error publishing message: ", error))
                 .then();
     }
 
-    private Mono<Void> broadcastToRoom(String roomId, String message) {
-        return sessionManager.getRoomSessions(roomId)
-                .flatMap(sessionId -> sendMessageToSession(sessionId, message))
-                .then();
+    private Flux<Void> broadcastToRoom(String roomKey, String message) {
+        return sessionManager.getRoomSessionIds(roomKey)
+                .flatMap(sessionId -> sendMessageToSession(sessionId, message));
     }
 
     private Mono<Void> sendMessageToSession(String sessionId, String message) {
@@ -162,8 +159,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                                 });
                     }
                     return sessionManager.removeSession(sessionId);
-                })
-                .then();
+                });
     }
 
     private Mono<Void> sendErrorMessage(WebSocketSession session, String errorMessage) {
