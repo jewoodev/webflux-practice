@@ -33,7 +33,8 @@ class AuthControllerTest extends MockTestSupport {
 
     @BeforeEach
     void setUp() {
-            webTestClient = WebTestClient.bindToController(authController).build();
+            webTestClient = WebTestClient.bindToController(authController)
+                    .build();
     }
 
     @DisplayName("회원가입 시 유효한 데이터를 입력하면 정상적으로 회원가입에 성공한다.")
@@ -45,7 +46,7 @@ class AuthControllerTest extends MockTestSupport {
                         .username(testUsername)
                         .password("Test password")
                         .email("test@example.com")
-                        .role("LAB")
+                        .role(LAB)
                         .build();
 
         // 유효한 request로 회원가입 요청을 하면
@@ -65,15 +66,15 @@ class AuthControllerTest extends MockTestSupport {
                     .jsonPath("$.username").isEqualTo(request.username());
     }
 
-    @DisplayName("회원가입 시 유효하지 않은 데이터를 입력하면 예외가 발생한다.")
+    @DisplayName("회원가입 시 유효하지 않은 username을 입력하면 예외가 발생한다.")
     @Test
     void register_WithInvalidData_ShouldReturnBadRequest() {
         // Given
         UserRegisterRequest invalidRequest = UserRegisterRequest.builder()
-                        .username("")
-                        .password("123")
-                        .email("invalid-email")
-                        .role("LAB")
+                        .username("e") // 최소 길이 값을 충족 x
+                        .password("Test password")
+                        .email("test@example.com")
+                        .role(LAB)
                         .build();
 
         // When & Then
@@ -84,6 +85,26 @@ class AuthControllerTest extends MockTestSupport {
                         .exchange()
                         .expectStatus().isBadRequest();
     }
+
+    @DisplayName("회원 가입시 계정 타입을 선택하지 않으면 실패한다.")
+    @Test
+    void register_WithInvalidRole_ShouldReturnBadRequest() {
+        // given
+        UserRegisterRequest invalidRequest = UserRegisterRequest.builder()
+                .username("Test username")
+                .password("Test password")
+                .email("test@example.com")
+                .build();
+
+        // when // then
+        webTestClient.post()
+                .uri("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidRequest)
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
 
     @DisplayName("로그인 시 유효한 데이터를 입력하면 정상적으로 로그인에 성공한다.")
     @Test

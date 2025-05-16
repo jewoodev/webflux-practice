@@ -2,12 +2,12 @@ package com.heri2go.chat.web.service.chatroom;
 
 import com.heri2go.chat.IntegrationTestSupport;
 import com.heri2go.chat.domain.chatroom.ChatRoom;
+import com.heri2go.chat.domain.chatroom.ChatRoomParticipant;
 import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.controller.auth.request.UserRegisterRequest;
 import com.heri2go.chat.web.controller.chatroom.request.ChatRoomCreateRequest;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
@@ -15,30 +15,12 @@ import reactor.test.StepVerifier;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+import static com.heri2go.chat.domain.user.Role.LAB;
+
 class ChatRoomServiceTest extends IntegrationTestSupport {
 
-    private UserRegisterRequest validRegisterRequest;
-    private UserDetailsImpl userDetails;
-    private String testUserId;
     private final String testUsername = "Test username";
-    private final String testPassword = "Test password";
     private final LocalDateTime NOW = LocalDateTime.now().withNano(0);
-
-    @BeforeEach
-    void setUp() {
-        validRegisterRequest = UserRegisterRequest.builder()
-                .username(testUsername)
-                .password(testPassword)
-                .email("test@example.com")
-                .role("LAB")
-                .build();
-
-        userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
-                .then(userDetailsService.findByUsername(testUsername))
-                .block();
-
-        testUserId = userDetails.getUserId();
-    }
 
     @AfterEach
     void tearDown() {
@@ -46,6 +28,8 @@ class ChatRoomServiceTest extends IntegrationTestSupport {
                 .then(mongoTemplate.createCollection(User.class))
                 .then(mongoTemplate.dropCollection(ChatRoom.class))
                 .then(mongoTemplate.createCollection(ChatRoom.class))
+                .then(mongoTemplate.dropCollection(ChatRoomParticipant.class))
+                .then(mongoTemplate.createCollection(ChatRoomParticipant.class))
                 .then(redisDao.delete("user::" + testUsername))
                 .block();
     }
@@ -54,6 +38,21 @@ class ChatRoomServiceTest extends IntegrationTestSupport {
     @Test
     void userCanGetChatRoomInfo_whatTheyReferring_ThroughUserDetails() {
         // given
+        String testPassword = "Test password";
+
+        UserRegisterRequest validRegisterRequest = UserRegisterRequest.builder()
+                .username(testUsername)
+                .password(testPassword)
+                .email("test@example.com")
+                .role(LAB)
+                .build();
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
+                .then(userDetailsService.findByUsername(testUsername))
+                .block();
+
+        String testUserId = userDetails.getUserId();
+
         ChatRoomCreateRequest request = ChatRoomCreateRequest.builder()
                 .roomName("Test chat room 1")
                 .orderId("Test order id 1")
@@ -83,6 +82,21 @@ class ChatRoomServiceTest extends IntegrationTestSupport {
     @Test
     void chatRoom_isCreated_when_order_isCreated() {
         // given
+        String testPassword = "Test password";
+
+        UserRegisterRequest validRegisterRequest = UserRegisterRequest.builder()
+                .username(testUsername)
+                .password(testPassword)
+                .email("test@example.com")
+                .role(LAB)
+                .build();
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
+                .then(userDetailsService.findByUsername(testUsername))
+                .block();
+
+        String testUserId = userDetails.getUserId();
+
         String testOrderId = "Test order id";
         String testChatRoomId = "test chat room 1";
 

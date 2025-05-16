@@ -6,32 +6,15 @@ import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.controller.auth.request.UserRegisterRequest;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
+import static com.heri2go.chat.domain.user.Role.LAB;
 
 class UnreadChatServiceTest extends IntegrationTestSupport {
 
-    private UserRegisterRequest validRegisterRequest;
-    private UserDetailsImpl userDetails;
     private final String testUsername = "Test username";
-    private final String testPassword = "Test password";
-
-    @BeforeEach
-    void setUp() {
-        validRegisterRequest = UserRegisterRequest.builder()
-                .username(testUsername)
-                .password(testPassword)
-                .email("test@example.com")
-                .role("LAB")
-                .build();
-
-        userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
-                .then(userDetailsService.findByUsername(testUsername))
-                .block();
-    }
 
     @AfterEach
     void tearDown() {
@@ -47,6 +30,19 @@ class UnreadChatServiceTest extends IntegrationTestSupport {
     @Test
     void userCanGetUnreadChatsInfo_throughUserDetails() {
         // given
+        String testPassword = "Test password";
+
+        UserRegisterRequest validRegisterRequest = UserRegisterRequest.builder()
+                .username(testUsername)
+                .password(testPassword)
+                .email("test@example.com")
+                .role(LAB)
+                .build();
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
+                .then(userDetailsService.findByUsername(testUsername))
+                .block();
+
         UnreadChat testUnreadChat = UnreadChat.builder()
                 .chatId("Test chat id")
                 .unreadUsername(testUsername)

@@ -38,9 +38,7 @@ class ChatRoomControllerTest extends MockTestSupport {
 
     @BeforeEach
     void setUp() {
-        webTestClient = WebTestClient.bindToController(chatRoomController)
-                .configureClient()
-                .build();
+        webTestClient = WebTestClient.bindToController(chatRoomController).build();
     }
 
     @DisplayName("각 사용자는 자신이 참여 중인 채팅방에 대한 정보들을 조회할 수 있다.")
