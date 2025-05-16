@@ -1,6 +1,8 @@
 package com.heri2go.chat.web.controller.auth.request;
 
 
+import com.heri2go.chat.domain.user.Role;
+import com.heri2go.chat.validator.Enum;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -8,20 +10,20 @@ import lombok.Builder;
 
 @Builder
 public record UserRegisterRequest(
-        @Size(min = 3, max = 20, message = "Username must be between 3 and 20 characters") 
-        @NotBlank(message = "Username is required") 
+        @Size(min = 3, max = 20, message = "Username은 3 ~ 20 자로 구성되어야 합니다.")
+        @NotBlank(message = "Username은 필수 값입니다.")
         String username,
 
-        @Size(min = 6, message = "Password must be at least 6 characters") 
-        @NotBlank(message = "Password is required") 
+        @Size(min = 6, message = "Password는 적어도 6자보다 길어야 합니다.")
+        @NotBlank(message = "Password는 필수 값입니다.")
         String password,
 
-        @Email(message = "Invalid email format") 
-        @NotBlank(message = "Email is required") 
+        @NotBlank(message = "Email is required")
+        @Email(message = "유효하지 않은 이메일 형식입니다.")
         String email,
 
-        @NotBlank(message = "Role is required")
-        String role
+        @Enum(message = "유효하지 않은 역할 값입니다.")
+        Role role
 ) {
         public static UserRegisterRequest withEncodedPassword(UserRegisterRequest req, String encodedPassword) {
                 return UserRegisterRequest.builder()

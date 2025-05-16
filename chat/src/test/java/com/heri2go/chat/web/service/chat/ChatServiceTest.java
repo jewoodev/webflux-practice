@@ -8,45 +8,17 @@ import com.heri2go.chat.web.controller.auth.request.UserRegisterRequest;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
 import com.heri2go.chat.web.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
 import java.util.Set;
 
+import static com.heri2go.chat.domain.user.Role.LAB;
+
 class ChatServiceTest extends IntegrationTestSupport {
 
-    private ChatCreateRequest validChatCreateRequest;
-    private UserRegisterRequest validRegisterRequest;
-    private UserDetailsImpl userDetails;
-    private final String testUsername = "Test usename";
-    private final String testPassword = "Test password";
-    private final String testRoomId = "101";
-    private final String chatContent = "Hello, WebFlux!";;
-
-    @BeforeEach
-    void setUp() {
-        validRegisterRequest = UserRegisterRequest.builder()
-                .username(testUsername)
-                .password(testPassword)
-                .email("test@example.com")
-                .role("LAB")
-                .build();
-
-        userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
-                .then(userDetailsService.findByUsername(testUsername))
-                .block();
-
-
-        validChatCreateRequest = ChatCreateRequest.builder()
-                .content(chatContent)
-                .sender(testUsername)
-                .unreadUsernames(Set.of(testUsername))
-                .roomId(testRoomId)
-                .lang("en")
-                .build();
-    }
+    private final String testUsername = "Test username";
 
     @AfterEach
     void tearDown() {
@@ -61,7 +33,31 @@ class ChatServiceTest extends IntegrationTestSupport {
     @DisplayName("유효한 메세지 저장 요청을 받으면 저장에 성공하고 응답 dto를 반환한다.")
     @Test
     void saveSuccessfulThroughValidRequest() {
-        //Given //When // Then
+        //Given
+        String testPassword = "Test password";
+        String testRoomId = "101";
+        String chatContent = "Hello, WebFlux!";;
+
+        UserRegisterRequest validRegisterRequest = UserRegisterRequest.builder()
+                .username(testUsername)
+                .password(testPassword)
+                .email("test@example.com")
+                .role(LAB)
+                .build();
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
+                .then(userDetailsService.findByUsername(testUsername))
+                .block();
+
+        ChatCreateRequest validChatCreateRequest = ChatCreateRequest.builder()
+                .content(chatContent)
+                .sender(testUsername)
+                .unreadUsernames(Set.of(testUsername))
+                .roomId(testRoomId)
+                .lang("en")
+                .build();
+
+        // When // Then
         StepVerifier.create(chatService.save(validChatCreateRequest))
                 .expectNextMatches(chat -> chat.getRoomId().equals(validChatCreateRequest.roomId()) &&
                         chat.getSender().equals(validChatCreateRequest.sender()) &&
@@ -71,8 +67,31 @@ class ChatServiceTest extends IntegrationTestSupport {
 
     @DisplayName("유저는 자신이 참여 중이며 존재하는 채팅방의 채팅들은 조회할 수 있다.")
     @Test
-    void userCanGetChat__whatValid_andTheyParticipatedIn() {
+    void userCanGetChat_whatValid_andTheyParticipatedIn() {
         // Given
+        String testPassword = "Test password";
+        String testRoomId = "101";
+        String chatContent = "Hello, WebFlux!";;
+
+        UserRegisterRequest validRegisterRequest = UserRegisterRequest.builder()
+                .username(testUsername)
+                .password(testPassword)
+                .email("test@example.com")
+                .role(LAB)
+                .build();
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
+                .then(userDetailsService.findByUsername(testUsername))
+                .block();
+
+        ChatCreateRequest validChatCreateRequest = ChatCreateRequest.builder()
+                .content(chatContent)
+                .sender(testUsername)
+                .unreadUsernames(Set.of(testUsername))
+                .roomId(testRoomId)
+                .lang("en")
+                .build();
+
         chatService.save(validChatCreateRequest)
                 .block();
 
@@ -88,6 +107,29 @@ class ChatServiceTest extends IntegrationTestSupport {
     @Test
     void getEmptyChat_IfNonChatRoomIsQueried() {
         // Given
+        String testPassword = "Test password";
+        String testRoomId = "101";
+        String chatContent = "Hello, WebFlux!";;
+
+        UserRegisterRequest validRegisterRequest = UserRegisterRequest.builder()
+                .username(testUsername)
+                .password(testPassword)
+                .email("test@example.com")
+                .role(LAB)
+                .build();
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
+                .then(userDetailsService.findByUsername(testUsername))
+                .block();
+
+        ChatCreateRequest validChatCreateRequest = ChatCreateRequest.builder()
+                .content(chatContent)
+                .sender(testUsername)
+                .unreadUsernames(Set.of(testUsername))
+                .roomId(testRoomId)
+                .lang("en")
+                .build();
+
         chatService.save(validChatCreateRequest)
                 .block();
 
