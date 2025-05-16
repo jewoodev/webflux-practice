@@ -45,7 +45,7 @@ public class User {
                 .username(req.username())
                 .password(req.password())
                 .email(req.email())
-                .role(Role.valueOf(req.role()))
+                .role(req.role())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
