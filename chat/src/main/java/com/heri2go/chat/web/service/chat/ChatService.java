@@ -1,5 +1,6 @@
 package com.heri2go.chat.web.service.chat;
 
+import com.heri2go.chat.web.service.chatroom.ChatRoomService;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -26,6 +27,7 @@ public class ChatService {
     private final ChatRepository chatRepository;
     private final ChatConverter chatConverter;
     private final UnreadChatService unreadChatService;
+    private final ChatRoomService chatRoomService;
 
     public Mono<Chat> save(ChatCreateRequest req) {
         return chatRepository.save(Chat.from(req));
@@ -46,8 +48,11 @@ public class ChatService {
                 return Mono.error(new MessageInvalidException("메세지 내용이 비어있어 에러 발생"));
             }
 
-            // 모든 채팅은 저장된 후, UnreadChat(단일 유저에게 수신된 메세지 중에 확인하지 않은 메세지 정보)를 추가적으로 저장해야 한다.
+            // 모든 채팅은 저장된 후,
+            // 채팅방의 '마지막 채팅에 대한 정보'를 갱신하고
+            // UnreadChat(단일 유저에게 수신된 메세지 중에 확인하지 않은 메세지 정보)를 추가적으로 저장해야 한다.
             return this.save(req)
+                    .flatMap(chatRoomService::updateAboutLastChat)
                     .flatMap(unreadChatService::save)
                     .flatMap(chatConverter::convertToJson)
                     .onErrorResume(JsonProcessingException.class, e -> {

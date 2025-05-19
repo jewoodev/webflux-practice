@@ -1,5 +1,6 @@
 package com.heri2go.chat.web.service.chatroom;
 
+import com.heri2go.chat.domain.chat.Chat;
 import com.heri2go.chat.domain.chatroom.ChatRoom;
 import com.heri2go.chat.domain.chatroom.ChatRoomParticipant;
 import com.heri2go.chat.domain.chatroom.ChatRoomParticipantRepository;
@@ -11,6 +12,10 @@ import com.heri2go.chat.web.exception.UserNotFoundException;
 import com.heri2go.chat.web.service.chatroom.response.ChatRoomResponse;
 import com.heri2go.chat.web.service.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -21,6 +26,7 @@ public class ChatRoomService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
+    private final ReactiveMongoTemplate mongoTemplate;
     private final ChatRoomParticipantService chatRoomParticipantService;
     private final UserService userService;
 
@@ -48,5 +54,17 @@ public class ChatRoomService {
                         chatRoomRepository.findById(chatRoomParticipant.getChatRoomId())
                 .map(ChatRoomResponse::from))
                 .switchIfEmpty(Mono.error(new ChatRoomNotFoundException("참여 중인 채팅방이 없습니다.")));
+    }
+
+    public Mono<Chat> updateAboutLastChat(Chat chat) {
+        return mongoTemplate.updateFirst(
+                Query.query(Criteria.where("_id").is(chat.getRoomId())),
+                new Update()
+                        .set("lastMessage", chat.getContent())
+                        .set("lastSender", chat.getSender())
+                        .set("lastMessageTime", chat.getCreatedAt())
+                        .set("updatedAt", chat.getCreatedAt()),
+                ChatRoom.class
+        ).then(Mono.just(chat));
     }
 }
