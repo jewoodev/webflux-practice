@@ -4,6 +4,7 @@ import com.heri2go.chat.domain.RedisDao;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.util.chat.ChatConverter;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
+import com.heri2go.chat.web.exception.UnauthorizedException;
 import com.heri2go.chat.web.service.chatroom.ChatRoomService;
 import com.heri2go.chat.web.service.session.ConnectInfoProvider;
 import com.heri2go.chat.web.service.session.RedisSessionManager;
@@ -68,7 +69,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                     
                     // 사용자의 모든 채팅방 구독
                     return chatRoomService.getOwnChatRoomResponse(userDetails)
-                            .flatMap(chatRoom -> // 여기서 채팅방 participantIds 에 userDetails에서 조회되는 유저가 포함되어있는지 확인하여 접근 제한 걸기
+                            .flatMap(chatRoom ->
                                     sessionManager.saveSession(session.getId(), chatRoom.id(), userDetails.getUsername())
                                             .then(unreadChatService.getOfflineChat(userDetails) // 오프라인 상태인 동안 처리되지 못한 메세지 알림
                                                     .flatMap(chatConverter::convertToJson)
@@ -87,7 +88,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     private Mono<Void> handleMessageAndDisconnect(WebSocketSession session, UserDetailsImpl userDetails) {
         return session.receive()
                 .map(WebSocketMessage::getPayloadAsText)
-                .flatMap(payload -> handleIncomingMessage(session, payload))
+                .flatMap(payload -> handleIncomingMessage(session, payload, userDetails.getUserId()))
                 .then(Mono.fromRunnable(() -> {
                     sessions.remove(session.getId());
                     sessionManager.removeSession(session.getId()).subscribe();
@@ -99,8 +100,15 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                 .then();
     }
 
-    private Mono<Void> handleIncomingMessage(WebSocketSession session, String payload) {
+    private Mono<Void> handleIncomingMessage(WebSocketSession session, String payload, String userId) {
         return chatConverter.convertToReq(payload)
+                .flatMap(chatMessage -> chatRoomService.getById(chatMessage.roomId())
+                            .flatMap(chatRoomResponse -> {
+                                if (!chatRoomResponse.participantIds().contains(userId))
+                                    return Mono.error(new UnauthorizedException("참여 중이지 않은 채팅방으로 채팅을 보낼 수 없습니다."));
+                                return Mono.just(chatMessage);
+                            })
+                )
                 .flatMap(chatMessage -> {
                     switch (chatMessage.type()) {
                         case ENTER:
@@ -113,8 +121,9 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                             return Mono.error(new IllegalArgumentException("Unknown content type in Chat"));
                     }
                 })
+                .onErrorResume(UnauthorizedException.class, e -> sendErrorMessage(session, e.getMessage()))
                 .onErrorResume(e -> {
-                    log.error("Error processing content: ", e);
+                    log.error("Unexpected error processing content: ", e);
                     return sendErrorMessage(session, "메시지 처리 중 오류가 발생했습니다.");
                 });
     }

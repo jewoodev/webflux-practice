@@ -39,13 +39,18 @@ public class ChatRoomService {
                         return Mono.error(new UserNotFoundException("One or more participants not found"));
                     }
                     return chatRoomRepository.save(ChatRoom.from(request))
-                            .flatMap(chatRoom -> 
-                                Flux.fromIterable(users)
-                                    .map(user -> ChatRoomParticipant.from(user, chatRoom.getId()))
-                                    .flatMap(chatRoomParticipantRepository::save)
-                                    .then(Mono.just(ChatRoomResponse.from(chatRoom)))
+                            .flatMap(chatRoom ->
+                                    Flux.fromIterable(users)
+                                            .map(user -> ChatRoomParticipant.from(user, chatRoom.getId()))
+                                            .flatMap(chatRoomParticipantRepository::save)
+                                            .then(Mono.just(ChatRoomResponse.from(chatRoom)))
                             );
                 });
+    }
+
+    public Mono<ChatRoomResponse> getById(String id) {
+        return chatRoomRepository.findById(id)
+                .map(ChatRoomResponse::from);
     }
 
     public Flux<ChatRoomResponse> getOwnChatRoomResponse(UserDetailsImpl userDetails) {
