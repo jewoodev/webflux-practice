@@ -72,8 +72,7 @@ class ChatRoomServiceTest extends IntegrationTestSupport {
                 .expectNextMatches(response -> response.roomName().equals(request.roomName()) &&
                         response.participantIds().contains(testUserId) &&
                         response.lastMessage().equals(request.lastMessage()) &&
-                        response.lastSender().equals(request.lastSender()) &&
-                        response.lastMessageTime().equals(request.lastMessageTime())
+                        response.lastSender().equals(request.lastSender())
                 )
                 .verifyComplete();
     }
@@ -118,8 +117,8 @@ class ChatRoomServiceTest extends IntegrationTestSupport {
                         response.roomName().equals(requestFromOrder.roomName()) &&
                         response.participantIds().equals(requestFromOrder.participantIds()) &&
                         response.lastMessage().equals(requestFromOrder.lastMessage()) &&
-                        response.lastSender().equals(requestFromOrder.lastSender()) &&
-                        response.lastMessageTime().equals(requestFromOrder.lastMessageTime()))
+                        response.lastSender().equals(requestFromOrder.lastSender())
+                )
                 .verifyComplete();
     }
 }

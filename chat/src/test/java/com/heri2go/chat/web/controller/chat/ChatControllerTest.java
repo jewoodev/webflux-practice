@@ -64,7 +64,6 @@ class ChatControllerTest extends MockTestSupport {
                         .roomId("Test room id")
                         .lang("Test chat lang")
                         .sentimentScore(0.0)
-                        .createdAt(NOW)
                         .build();
 
         // when

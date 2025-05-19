@@ -68,7 +68,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                     
                     // 사용자의 모든 채팅방 구독
                     return chatRoomService.getOwnChatRoomResponse(userDetails)
-                            .flatMap(chatRoom ->
+                            .flatMap(chatRoom -> // 여기서 채팅방 participantIds 에 userDetails에서 조회되는 유저가 포함되어있는지 확인하여 접근 제한 걸기
                                     sessionManager.saveSession(session.getId(), chatRoom.id(), userDetails.getUsername())
                                             .then(unreadChatService.getOfflineChat(userDetails) // 오프라인 상태인 동안 처리되지 못한 메세지 알림
                                                     .flatMap(chatConverter::convertToJson)

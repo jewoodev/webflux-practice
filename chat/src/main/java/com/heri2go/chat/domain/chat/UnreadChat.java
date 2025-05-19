@@ -1,5 +1,6 @@
 package com.heri2go.chat.domain.chat;
 
+import com.heri2go.chat.domain.BaseTimeEntity;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,33 +10,25 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import reactor.core.publisher.Flux;
 
-import java.time.LocalDateTime;
-
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Document
-public class UnreadChat {
+public class UnreadChat extends BaseTimeEntity {
     @Id
     private String id;
     private String chatId;
 
-    @Indexed(unique = true)
+    @Indexed
     private String unreadUsername;
     private String sender;
     private String content;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-
     @Builder
-    private UnreadChat(String chatId, String unreadUsername, String sender, String content,
-                       LocalDateTime createdAt, LocalDateTime updatedAt) {
+    private UnreadChat(String chatId, String unreadUsername, String sender, String content) {
         this.chatId = chatId;
         this.unreadUsername = unreadUsername;
         this.sender = sender;
         this.content = content;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 
     public static Flux<UnreadChat> from(Chat chat) {
@@ -45,8 +38,6 @@ public class UnreadChat {
                         .unreadUsername(unreadUsername)
                         .sender(chat.getSender())
                         .content(chat.getContent())
-                        .createdAt(LocalDateTime.now())
-                        .updatedAt(LocalDateTime.now())
                         .build());
     }
 }

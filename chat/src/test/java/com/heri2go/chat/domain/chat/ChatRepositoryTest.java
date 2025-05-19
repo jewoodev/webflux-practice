@@ -27,25 +27,21 @@ class ChatRepositoryTest extends MongoTestSupport {
         Chat chat1 = Chat.builder()
                 .roomId("1")
                 .content("첫 번째 메시지")
-                .createdAt(now.minusMinutes(2))
                 .build();
 
         Chat chat2 = Chat.builder()
                 .roomId("1")
                 .content("두 번째 메시지")
-                .createdAt(now.minusMinutes(1))
                 .build();
 
         Chat chat3 = Chat.builder()
                 .roomId("1")
                 .content("세 번째 메시지")
-                .createdAt(now)
                 .build();
 
         Chat chat4 = Chat.builder()
                 .roomId("2")
                 .content("다른 방 메시지")
-                .createdAt(now)
                 .build();
 
         // 데이터 저장
@@ -69,25 +65,21 @@ class ChatRepositoryTest extends MongoTestSupport {
         Chat chat1 = Chat.builder()
                 .roomId("1")
                 .content("첫 번째 메시지")
-                .createdAt(now.minusMinutes(2))
                 .build();
 
         Chat chat2 = Chat.builder()
                 .roomId("1")
                 .content("두 번째 메시지")
-                .createdAt(now.minusMinutes(1))
                 .build();
 
         Chat chat3 = Chat.builder()
                 .roomId("1")
                 .content("세 번째 메시지")
-                .createdAt(now)
                 .build();
 
         Chat chat4 = Chat.builder()
                 .roomId("2")
                 .content("다른 방 메시지")
-                .createdAt(now)
                 .build();
 
         // 데이터 저장

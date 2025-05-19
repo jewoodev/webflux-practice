@@ -6,8 +6,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
-import java.time.LocalDateTime;
-
 class ChatRoomParticipantRepositoryTest extends MongoTestSupport {
 
     @AfterEach
@@ -29,7 +27,6 @@ class ChatRoomParticipantRepositoryTest extends MongoTestSupport {
                         .userId(testUserId)
                         .username(testUsername)
                         .chatRoomId(testChatRoomId)
-                        .joinedAt(LocalDateTime.now())
                         .build()
                 )
                 .block();
