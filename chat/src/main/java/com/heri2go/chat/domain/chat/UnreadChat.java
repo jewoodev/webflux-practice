@@ -19,7 +19,7 @@ public class UnreadChat {
     private String id;
     private String chatId;
 
-    @Indexed(unique = true)
+    @Indexed
     private String unreadUsername;
     private String sender;
     private String content;
