@@ -1,22 +1,19 @@
 package com.heri2go.chat.domain.user;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
-
+import com.heri2go.chat.domain.BaseTimeEntity;
 import com.heri2go.chat.web.controller.auth.request.UserRegisterRequest;
-
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Document
-public class User {
+public class User extends BaseTimeEntity {
 
     @Id
     private String id;
@@ -27,17 +24,12 @@ public class User {
     private String email;
     private Role role;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-
     @Builder
-    private User(String username, String password, String email, Role role, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    private User(String username, String password, String email, Role role) {
         this.username = username;
         this.password = password;
         this.email = email;
         this.role = role;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 
     public static User from(UserRegisterRequest req) {
@@ -46,8 +38,6 @@ public class User {
                 .password(req.password())
                 .email(req.email())
                 .role(req.role())
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
                 .build();
     }
 }
