@@ -23,6 +23,7 @@ import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -95,7 +96,8 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                 }))
                 .then(redisDao.setString(
                         cip.getLastOnlineTimeKey(userDetails.getUsername()),
-                        LocalDateTime.now().toString()
+                        LocalDateTime.now().toString(),
+                        Duration.ofDays(7)
                 ))
                 .then();
     }

@@ -21,7 +21,7 @@ public class Chat extends BaseTimeEntity {
     private String id;
     private String content;
     private String sender;
-    private Set<String> unreadUsernames;
+    private Set<String> unreadUsernames; // 읽음 처리할 용도
 
     @Indexed
     private String roomId;
