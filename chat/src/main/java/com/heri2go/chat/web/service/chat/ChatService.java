@@ -31,8 +31,8 @@ public class ChatService {
     }
 
     public Flux<ChatResponse> getByRoomIdToInvited(String roomId, UserDetailsImpl userDetails) {
-        return chatRoomService.getById(roomId)
-                .filter(chatRoomResponse -> chatRoomResponse.participantIds().contains(userDetails.getUserId()))
+        return chatRoomService.getParticipantIdsById(roomId)
+                .filter(paricipantIds -> paricipantIds.contains(userDetails.getUserId()))
                 .switchIfEmpty(Mono.error(new UnauthorizedException("접근 권한이 없는 채팅방입니다.")))
                 .thenMany(chatRepository.findByRoomId(roomId))
                 .map(ChatResponse::from);

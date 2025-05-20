@@ -12,6 +12,7 @@ import com.heri2go.chat.web.exception.UserNotFoundException;
 import com.heri2go.chat.web.service.chatroom.response.ChatRoomResponse;
 import com.heri2go.chat.web.service.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -19,6 +20,8 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Service
@@ -48,9 +51,10 @@ public class ChatRoomService {
                 });
     }
 
-    public Mono<ChatRoomResponse> getById(String id) {
+    @Cacheable(value = "chatPI", key = "#p0", cacheManager = "cacheManager", unless = "#result == null")
+    public Mono<Set<String>> getParticipantIdsById(String id) {
         return chatRoomRepository.findById(id)
-                .map(ChatRoomResponse::from);
+                .map(chatRoom -> chatRoom.getParticipantIds());
     }
 
     public Flux<ChatRoomResponse> getOwnChatRoomResponse(UserDetailsImpl userDetails) {
