@@ -8,6 +8,7 @@ import com.heri2go.chat.util.chat.ChatConverter;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
 import com.heri2go.chat.web.exception.JsonConvertException;
 import com.heri2go.chat.web.exception.MessageInvalidException;
+import com.heri2go.chat.web.exception.ResourceNotFoundException;
 import com.heri2go.chat.web.exception.UnauthorizedException;
 import com.heri2go.chat.web.service.chat.response.ChatResponse;
 import com.heri2go.chat.web.service.chatroom.ChatRoomService;
@@ -32,6 +33,7 @@ public class ChatService {
 
     public Flux<ChatResponse> getByRoomIdToInvited(String roomId, UserDetailsImpl userDetails) {
         return chatRoomService.getParticipantIdsById(roomId)
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException("존재하지 않는 채팅방으로의 접근입니다.")))
                 .filter(paricipantIds -> paricipantIds.contains(userDetails.getUserId()))
                 .switchIfEmpty(Mono.error(new UnauthorizedException("접근 권한이 없는 채팅방입니다.")))
                 .thenMany(chatRepository.findByRoomId(roomId))

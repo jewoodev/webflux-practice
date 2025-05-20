@@ -6,12 +6,15 @@ import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.controller.auth.request.UserRegisterRequest;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
+import com.heri2go.chat.web.controller.chatroom.request.ChatRoomCreateRequest;
 import com.heri2go.chat.web.exception.ResourceNotFoundException;
+import com.heri2go.chat.web.service.chatroom.response.ChatRoomResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import reactor.test.StepVerifier;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static com.heri2go.chat.domain.user.Role.LAB;
@@ -70,8 +73,7 @@ class ChatServiceTest extends IntegrationTestSupport {
     void userCanGetChat_whatValid_andTheyParticipatedIn() {
         // Given
         String testPassword = "Test password";
-        String testRoomId = "101";
-        String chatContent = "Hello, WebFlux!";;
+        String chatContent = "Hello, WebFlux!";
 
         UserRegisterRequest validRegisterRequest = UserRegisterRequest.builder()
                 .username(testUsername)
@@ -84,6 +86,23 @@ class ChatServiceTest extends IntegrationTestSupport {
                 .then(userDetailsService.findByUsername(testUsername))
                 .block();
 
+        // 유저는 채팅을 치기 위해선 참여 중인 채팅방이 필요하다.
+
+        Set<String> participantIds = new HashSet<>();
+        participantIds.add(userDetails.getUserId());
+
+        ChatRoomCreateRequest chatRoomCreateRequest = ChatRoomCreateRequest.builder()
+                .orderId("Test order id")
+                .roomName("Test room name")
+                .participantIds(participantIds)
+                .build();
+
+        ChatRoomResponse chatRoomResponse = chatRoomService.save(chatRoomCreateRequest)
+                .block();
+        String testRoomId = chatRoomResponse.id();
+
+        // 참여 중인 채팅방이 있을 때 채팅이 저장될 수 있다.
+
         ChatCreateRequest validChatCreateRequest = ChatCreateRequest.builder()
                 .content(chatContent)
                 .sender(testUsername)
@@ -95,8 +114,9 @@ class ChatServiceTest extends IntegrationTestSupport {
         chatService.save(validChatCreateRequest)
                 .block();
 
-        // When // Then
+        // When
         StepVerifier.create(chatService.getByRoomIdToInvited(testRoomId, userDetails))
+                // Then
                 .expectNextMatches(resp -> resp.roomId().equals(testRoomId) &&
                         resp.sender().equals(testUsername) &&
                         resp.content().equals(chatContent))
