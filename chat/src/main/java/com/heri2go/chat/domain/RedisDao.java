@@ -58,8 +58,8 @@ public class RedisDao {
         return redisTemplate.expire(key, timeout);
     }
 
-    public Mono<Boolean> setString(String key, String value) {
-        return redisTemplate.opsForValue().set(key, value);
+    public Mono<Boolean> setString(String key, String value, Duration duration) {
+        return redisTemplate.opsForValue().set(key, value, duration);
     }
 
     public Mono<LocalDateTime> getLastOnlineTime(String key) {

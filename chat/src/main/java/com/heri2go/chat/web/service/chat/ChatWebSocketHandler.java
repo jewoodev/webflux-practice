@@ -23,6 +23,7 @@ import org.springframework.web.reactive.socket.WebSocketSession;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -95,16 +96,17 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                 }))
                 .then(redisDao.setString(
                         cip.getLastOnlineTimeKey(userDetails.getUsername()),
-                        LocalDateTime.now().toString()
+                        LocalDateTime.now().toString(),
+                        Duration.ofDays(7)
                 ))
                 .then();
     }
 
     private Mono<Void> handleIncomingMessage(WebSocketSession session, String payload, String userId) {
         return chatConverter.convertToReq(payload)
-                .flatMap(chatMessage -> chatRoomService.getById(chatMessage.roomId())
-                            .flatMap(chatRoomResponse -> {
-                                if (!chatRoomResponse.participantIds().contains(userId))
+                .flatMap(chatMessage -> chatRoomService.getParticipantIdsById(chatMessage.roomId())
+                            .flatMap(participantIds -> {
+                                if (!participantIds.contains(userId))
                                     return Mono.error(new UnauthorizedException("참여 중이지 않은 채팅방으로 채팅을 보낼 수 없습니다."));
                                 return Mono.just(chatMessage);
                             })
