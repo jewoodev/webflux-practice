@@ -17,6 +17,6 @@ public class ConnectInfoProvider { // 세션 데이터는 모두 서버 기준�
     }
 
     public String getLastOnlineTimeKey(String username) {
-        return SERVER_ID + ":last-online:" + username;
+        return "last-online:" + username;
     }
 }

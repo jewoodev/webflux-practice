@@ -22,6 +22,7 @@ import static com.heri2go.chat.domain.user.Role.LAB;
 class ChatServiceTest extends IntegrationTestSupport {
 
     private final String testUsername = "Test username";
+    private String testRoomId;
 
     @AfterEach
     void tearDown() {
@@ -30,6 +31,7 @@ class ChatServiceTest extends IntegrationTestSupport {
                 .then(mongoTemplate.dropCollection(User.class))
                 .then(mongoTemplate.createCollection(User.class))
                 .then(redisDao.delete("user::" + testUsername))
+                .then(redisDao.delete("chatPI::" + testRoomId))
                 .block();
     }
 
@@ -99,7 +101,7 @@ class ChatServiceTest extends IntegrationTestSupport {
 
         ChatRoomResponse chatRoomResponse = chatRoomService.save(chatRoomCreateRequest)
                 .block();
-        String testRoomId = chatRoomResponse.id();
+        testRoomId = chatRoomResponse.id();
 
         // 참여 중인 채팅방이 있을 때 채팅이 저장될 수 있다.
 
@@ -123,13 +125,13 @@ class ChatServiceTest extends IntegrationTestSupport {
                 .verifyComplete();
     }
 
-    @DisplayName("채팅이 없는 채팅방을 조회하면 0개의 채팅이 결과로 나온다.")
+    @DisplayName("채팅이 없는 채팅방을 조회하면 실패한다.")
     @Test
     void getEmptyChat_IfNonChatRoomIsQueried() {
         // Given
         String testPassword = "Test password";
-        String testRoomId = "101";
         String chatContent = "Hello, WebFlux!";;
+        testRoomId = "101";
 
         UserRegisterRequest validRegisterRequest = UserRegisterRequest.builder()
                 .username(testUsername)
