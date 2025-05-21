@@ -5,18 +5,18 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 @Component
-public class ConnectInfoProvider { // 세션 데이터는 모두 서버 기준으로 분산된다.
-    public static final String SERVER_ID = UUID.randomUUID().toString().substring(0, 8);
+public class ConnectInfoProvider {
+    public static final String SERVER_ID = UUID.randomUUID().toString().substring(0, 8); // 각 서버를 고유하게 식별하는 ID
 
-    public String getSessionKey(String sessionId) {
-        return SERVER_ID + ":session:" + sessionId;
+    public String getRoomSessionsKey(String roomId) { // 특정 채팅방을 구독 중인 웹소켓 세션의 ID를 가져오는 키
+        return "ServerId:" + SERVER_ID + "/RoomId:" + roomId;
     }
 
-    public String getRoomKey(String roomId) {
-        return SERVER_ID + ":room:" + roomId;
+    public String getLastOnlineTimeKey(String username) { // 특정 유저의 마지막 온라인 시간을 가져오는 키
+        return "LastOnline:" + username;
     }
 
-    public String getLastOnlineTimeKey(String username) {
-        return "last-online:" + username;
+    public String getRoomIdsKey(String sessionId) { // 특정 세션이 구독 중인 채팅방의 ID를 가져오는 키
+        return "SessionId:" + sessionId;
     }
 }
