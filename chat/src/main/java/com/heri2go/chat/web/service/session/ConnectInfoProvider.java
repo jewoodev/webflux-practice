@@ -19,4 +19,8 @@ public class ConnectInfoProvider {
     public String getRoomIdsKey(String sessionId) { // 특정 세션이 구독 중인 채팅방의 ID를 가져오는 키
         return "SessionId:" + sessionId;
     }
+
+    public String getSessionIdKey(String userId) {
+        return "UserId:" + userId;
+    }
 }

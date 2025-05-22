@@ -38,15 +38,15 @@ public class RedisDao {
         return redisTemplate.opsForSet().members(key);
     }
 
-    public Mono<Boolean> putAllToHash(String key, Map<String, String> map) {
-        return redisTemplate.opsForHash().putAll(key, map);
+    public Mono<Boolean> putToHash(String key, String mapKey, String mapValue) {
+        return redisTemplate.opsForHash().put(key, mapKey, mapValue);
     }
 
     public Flux<Map.Entry<Object, Object>> getEntries(String key) {
         return redisTemplate.opsForHash().entries(key);
     }
 
-    public Mono<Long> removeFromSet(String key, String... value) {
+    public Mono<Long> removeFromSet(String key, Object... value) {
         return redisTemplate.opsForSet().remove(key, value);
     }
 
@@ -58,8 +58,8 @@ public class RedisDao {
         return redisTemplate.expire(key, timeout);
     }
 
-    public Mono<Boolean> setString(String key, String value, Duration duration) {
-        return redisTemplate.opsForValue().set(key, value, duration);
+    public Mono<Boolean> setString(String key, String value) {
+        return redisTemplate.opsForValue().set(key, value);
     }
 
     public Mono<LocalDateTime> getLastOnlineTime(String key) {
@@ -67,4 +67,9 @@ public class RedisDao {
                 .map(timeStr -> LocalDateTime.parse(timeStr))
                 .defaultIfEmpty(LocalDateTime.MIN);
     }
+
+    public Mono<String> getString(String key) {
+        return redisTemplate.opsForValue().get(key);
+    }
 }
+

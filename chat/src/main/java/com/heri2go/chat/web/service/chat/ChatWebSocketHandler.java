@@ -5,6 +5,7 @@ import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.util.chat.ChatConverter;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
 import com.heri2go.chat.web.exception.UnauthorizedException;
+import com.heri2go.chat.web.exception.WebsocketNotValidException;
 import com.heri2go.chat.web.service.chatroom.ChatRoomService;
 import com.heri2go.chat.web.service.session.ConnectInfoProvider;
 import com.heri2go.chat.web.service.session.RedisSessionManager;
@@ -55,7 +56,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
 
     @PreDestroy
     public void tearDown() {
-        sessions.keySet().forEach(sessionManager::removeRoomSession);
+        sessions.keySet().forEach(sessionId -> sessionManager.removeRoomSession(sessionId, "*"));
     }
 
     @Override
@@ -71,7 +72,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                     // 사용자의 모든 채팅방 구독
                     return chatRoomService.getOwnChatRoomResponse(userDetails)
                             .flatMap(chatRoom ->
-                                    sessionManager.saveRoomSession(session.getId(), chatRoom.id())
+                                    sessionManager.saveRoomSession(session.getId(), chatRoom.id(), userDetails.getUserId())
                                             .then(unreadChatService.getOfflineChat(userDetails) // 오프라인 상태인 동안 처리되지 못한 메세지 알림
                                                     .flatMap(chatConverter::convertToJson)
                                                     .flatMap(json -> sendMessageToSession(session.getId(), json))
@@ -92,13 +93,13 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                 .flatMap(payload -> handleIncomingMessage(session, payload, userDetails.getUserId()))
                 .then(Mono.fromRunnable(() -> {
                     sessions.remove(session.getId());
-                    sessionManager.removeRoomSession(session.getId()).subscribe();
+                    sessionManager.removeRoomSession(session.getId(), userDetails.getUserId()).subscribe();
                 }))
                 .then(redisDao.setString(
                         cip.getLastOnlineTimeKey(userDetails.getUsername()),
-                        LocalDateTime.now().toString(),
-                        Duration.ofDays(7)
+                        LocalDateTime.now().toString()
                 ))
+                .then(redisDao.expire(cip.getLastOnlineTimeKey(userDetails.getUsername()), Duration.ofDays(7)))
                 .then();
     }
 
@@ -116,7 +117,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                         case ENTER:
                             return handleEnterMessage(chatMessage);
                         case LEAVE:
-                            return handleLeaveMessage(session, chatMessage);
+                            return handleLeaveMessage(session, chatMessage, userId);
                         case TALK:
                             return handleChatMessage(chatMessage);
                         default:
@@ -134,8 +135,8 @@ public class ChatWebSocketHandler implements WebSocketHandler {
         return publishMessage(message);
     }
 
-    private Mono<Void> handleLeaveMessage(WebSocketSession session, ChatCreateRequest message) {
-        return sessionManager.removeRoomSession(session.getId())
+    private Mono<Void> handleLeaveMessage(WebSocketSession session, ChatCreateRequest message, String userId) {
+        return sessionManager.removeRoomSession(session.getId(), userId)
                 .then(publishMessage(message));
     }
 
@@ -165,10 +166,10 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                 return session.send(Mono.just(session.textMessage(message)))
                         .onErrorResume(e -> {
                             log.error("Failed to send content to session {}: ", sessionId, e);
-                            return sessionManager.removeRoomSession(sessionId);
+                            return Mono.error(e);
                         });
             }
-            return sessionManager.removeRoomSession(sessionId);
+            return Mono.error(new WebsocketNotValidException("웹소켓에 관련된 알 수 없는 에러입니다. 관리자에게 문의하세요."));
         });
     }
 
