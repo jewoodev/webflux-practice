@@ -2,6 +2,7 @@ package com.heri2go.chat.handler;
 
 import com.heri2go.chat.handler.response.ErrorResponse;
 import com.heri2go.chat.web.exception.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -11,11 +12,13 @@ import org.springframework.web.bind.support.WebExchangeBindException;
 
 import static org.springframework.http.HttpStatus.*;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicatedUsernameException.class)
     public ResponseEntity<ErrorResponse> handle(DuplicatedUsernameException e) {
+        log.error("Registration error: {}", e.getMessage());
         return ResponseEntity.badRequest().body(new ErrorResponse(BAD_REQUEST, e.getMessage()));
     }
 
@@ -46,11 +49,18 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handle(BadCredentialsException e) {
+        log.error("Login error: {}", e.getMessage());
         return ResponseEntity.badRequest().body(new ErrorResponse(BAD_REQUEST, e.getMessage()));
     }
 
     @ExceptionHandler(WebExchangeBindException.class)
     public ResponseEntity<ErrorResponse> handle(WebExchangeBindException e) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(BAD_REQUEST, e.getMessage()));
+    }
+
+    @ExceptionHandler(RefreshFailedException.class)
+    public ResponseEntity<ErrorResponse> handle(RefreshFailedException e) {
+        log.error("Refresh error: {}", e.getMessage());
         return ResponseEntity.badRequest().body(new ErrorResponse(BAD_REQUEST, e.getMessage()));
     }
 
