@@ -6,6 +6,7 @@ import com.heri2go.chat.domain.chatroom.ChatRoomRepository;
 import com.heri2go.chat.domain.token.RefreshHashRepository;
 import com.heri2go.chat.domain.user.UserRepository;
 import com.heri2go.chat.web.service.auth.AuthService;
+import com.heri2go.chat.web.service.auth.RefreshHashService;
 import com.heri2go.chat.web.service.auth.UserDetailsServiceImpl;
 import com.heri2go.chat.web.service.chat.ChatService;
 import com.heri2go.chat.web.service.chat.UnreadChatService;
@@ -51,4 +52,7 @@ public abstract class IntegrationTestSupport {
 
     @Autowired
     protected RefreshHashRepository refreshHashRepository;
+
+    @Autowired
+    protected RefreshHashService refreshHashService;
 }
