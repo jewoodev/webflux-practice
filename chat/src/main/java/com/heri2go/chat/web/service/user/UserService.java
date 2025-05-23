@@ -16,13 +16,14 @@ public class UserService {
 
     private final UserRepository userRepository;
 
+//    @Cacheable(value = "UserId", key = "#p0", cacheManager = "cacheManager", unless = "#result == null") 나중에 필요할 때 살릴 캐시
     public Mono<UserResponse> getById(String userId) {
         return userRepository.findById(userId)
                 .map(UserResponse::from)
                 .switchIfEmpty(Mono.error(new UserNotFoundException("User not found.")));
     }
 
-    @Cacheable(value = "user", key = "#p0", cacheManager = "cacheManager", unless = "#result == null")
+    @Cacheable(value = "UserResp", key = "#p0", cacheManager = "cacheManager", unless = "#result == null")
     public Mono<UserResponse> getByUsername(String username) {
         return userRepository.findByUsername(username)
                 .map(UserResponse::from)

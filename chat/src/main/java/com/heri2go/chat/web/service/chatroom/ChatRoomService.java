@@ -86,7 +86,7 @@ public class ChatRoomService {
                 .then(Mono.just(chatRoom));
     }
 
-    @Cacheable(value = "chatPI", key = "#p0", cacheManager = "cacheManager", unless = "#result == null")
+    @Cacheable(value = "ChatPI", key = "#p0", cacheManager = "cacheManager", unless = "#result == null")
     public Mono<Set<String>> getParticipantIdsById(String id) {
         return chatRoomRepository.findById(id)
                 .map(ChatRoom::getParticipantIds);
