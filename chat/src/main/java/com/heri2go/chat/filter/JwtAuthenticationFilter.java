@@ -55,13 +55,13 @@ public class JwtAuthenticationFilter implements WebFilter {
         return Mono.justOrEmpty(token)
                 .filter(header -> header.startsWith("Bearer "))
                 .map(header -> header.substring(7))
-                .switchIfEmpty(Mono.error(new InvalidJwtTokenException("Invalid token")));
+                .switchIfEmpty(Mono.error(new InvalidJwtTokenException("Invalid accessToken")));
     }
 
     private Mono<Void> authenticateToken(ServerWebExchange exchange, WebFilterChain chain, String token, String username) {
         return userDetailsService.findByUsername(username)
-                .filter(userDetails -> jwtService.validateToken(token, username))
-                .switchIfEmpty(Mono.error(new InvalidJwtTokenException("Invalid token")))
+                .filter(userDetails -> jwtService.validateSubject(token, username))
+                .switchIfEmpty(Mono.error(new InvalidJwtTokenException("Invalid accessToken")))
                 .map(userDetails -> new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities()
                 ))

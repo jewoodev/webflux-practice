@@ -1,6 +1,7 @@
 package com.heri2go.chat.web.controller.chat;
 
 import com.heri2go.chat.MockTestSupport;
+import com.heri2go.chat.handler.GlobalExceptionHandler;
 import com.heri2go.chat.web.controller.auth.AuthController;
 import com.heri2go.chat.web.controller.auth.request.LoginRequest;
 import com.heri2go.chat.web.controller.auth.request.UserRegisterRequest;
@@ -31,9 +32,13 @@ class AuthControllerTest extends MockTestSupport {
     @InjectMocks
     private AuthController authController;
 
+    @InjectMocks
+    private GlobalExceptionHandler exceptionHandler;
+
     @BeforeEach
     void setUp() {
             webTestClient = WebTestClient.bindToController(authController)
+                    .controllerAdvice(exceptionHandler)
                     .build();
     }
 
@@ -112,15 +117,22 @@ class AuthControllerTest extends MockTestSupport {
         // Given
         LoginRequest validRequest = new LoginRequest("Test username", "Test password");
 
-        LoginResponse loginResponse = LoginResponse.from(UserResponse.builder()
-                .username(validRequest.username())
-                .role(LAB)
-                .build(), "Test token");
+        LoginResponse loginResponse = LoginResponse.from(
+                UserResponse.builder()
+                        .id("Test user id")
+                        .username(validRequest.username())
+                        .password("Test password")
+                        .email("Test email")
+                        .role(LAB)
+                        .build(),
+                "Test access token",
+                "Test refresh token"
+        );
 
         // validRequest로 로그인 시도를 하면
         when(authService.login(validRequest))
-                        // 정상적으로 response를 반환한다.
-                        .thenReturn(Mono.just(loginResponse));
+                // 정상적으로 response를 반환한다.
+                .thenReturn(Mono.just(loginResponse));
 
         // When & Then
         webTestClient.post()
@@ -140,8 +152,9 @@ class AuthControllerTest extends MockTestSupport {
         // Given
         LoginRequest invalidRequest = new LoginRequest("Test username", "Wrong password");
 
+        BadCredentialsException exceptionForThisCase = new BadCredentialsException("Invalid credentials");
         when(authService.login(invalidRequest))
-                        .thenReturn(Mono.error(new BadCredentialsException("Invalid credentials")));
+                        .thenReturn(Mono.error(exceptionForThisCase));
 
         // When & Then
         webTestClient.post()

@@ -9,13 +9,15 @@ import lombok.Builder;
 public record LoginResponse(
         String username,
         Role role,
-        String token
+        String accessToken,
+        String refreshToken
 ) {
-    public static LoginResponse from(UserResponse userResponse, String token) {
+    public static LoginResponse from(UserResponse userResponse, String accessToken, String refreshToken) {
         return LoginResponse.builder()
                 .username(userResponse.username())
                 .role(userResponse.role())
-                .token(token)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .build();
     }
 }

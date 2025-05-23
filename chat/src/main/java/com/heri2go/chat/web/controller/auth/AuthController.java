@@ -12,7 +12,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 @Slf4j
@@ -33,6 +36,12 @@ public class AuthController {
     @PostMapping("/login") // 로그인
     public Mono<ResponseEntity<LoginResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
         return authService.login(loginRequest)
+                .map(ResponseEntity::ok);
+    }
+
+    @PostMapping("/refresh") // 토큰 리프레쉬
+    public Mono<ResponseEntity<RefreshResponse>> refreshToken(@Valid @RequestBody RefreshRequest refreshRequest) {
+        return refreshHashService.refresh(refreshRequest)
                 .map(ResponseEntity::ok);
     }
 }
