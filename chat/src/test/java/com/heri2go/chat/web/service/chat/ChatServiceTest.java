@@ -30,8 +30,8 @@ class ChatServiceTest extends IntegrationTestSupport {
                 .then(mongoTemplate.createCollection(Chat.class))
                 .then(mongoTemplate.dropCollection(User.class))
                 .then(mongoTemplate.createCollection(User.class))
-                .then(redisDao.delete("user::" + testUsername))
-                .then(redisDao.delete("chatPI::" + testRoomId))
+                .then(redisDao.delete("UserResp::" + testUsername))
+                .then(redisDao.delete("ChatPI::" + testRoomId))
                 .block();
     }
 

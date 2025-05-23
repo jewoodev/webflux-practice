@@ -22,7 +22,7 @@ class UnreadChatServiceTest extends IntegrationTestSupport {
                 .then(mongoTemplate.createCollection(User.class))
                 .then(mongoTemplate.dropCollection(UnreadChat.class))
                 .then(mongoTemplate.createCollection(UnreadChat.class))
-                .then(redisDao.delete("user::" + testUsername))
+                .then(redisDao.delete("UserResp::" + testUsername))
                 .block();
     }
 
