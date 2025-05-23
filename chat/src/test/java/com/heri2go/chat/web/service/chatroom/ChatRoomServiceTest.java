@@ -30,7 +30,8 @@ class ChatRoomServiceTest extends IntegrationTestSupport {
                 .then(mongoTemplate.createCollection(ChatRoom.class))
                 .then(mongoTemplate.dropCollection(ChatRoomParticipant.class))
                 .then(mongoTemplate.createCollection(ChatRoomParticipant.class))
-                .then(redisDao.delete("user::" + testUsername))
+                .then(redisDao.delete("UserResp::" + testUsername))
+                .then(redisDao.delete(""))
                 .block();
     }
 
@@ -66,9 +67,7 @@ class ChatRoomServiceTest extends IntegrationTestSupport {
                 .block();
 
         // when // then
-        StepVerifier.create(chatRoomService.getOwnChatRoomResponse(userDetails)
-                        .log()
-                )
+        StepVerifier.create(chatRoomService.getOwnChatRoomResponse(userDetails))
                 .expectNextMatches(response -> response.roomName().equals(request.roomName()) &&
                         response.participantIds().contains(testUserId) &&
                         response.lastMessage().equals(request.lastMessage()) &&

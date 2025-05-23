@@ -42,6 +42,10 @@ public class RedisDao {
         return redisTemplate.opsForHash().put(key, mapKey, mapValue);
     }
 
+    public Mono<Boolean> putAllToHash(String key, Map<?, ?> map) {
+        return redisTemplate.opsForHash().putAll(key, map);
+    }
+
     public Flux<Map.Entry<Object, Object>> getEntries(String key) {
         return redisTemplate.opsForHash().entries(key);
     }

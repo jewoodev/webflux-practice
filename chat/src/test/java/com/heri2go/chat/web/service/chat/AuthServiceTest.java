@@ -21,7 +21,8 @@ class AuthServiceTest extends IntegrationTestSupport {
     void tearDown() {
         mongoTemplate.dropCollection(User.class)
                 .then(mongoTemplate.createCollection(User.class))
-                .then(redisDao.delete("user::" + testUsername))
+                .then(redisDao.delete("UserResp::" + testUsername))
+                .then(redisDao.delete("RefreshHash:" + testUsername))
                 .block();
     }
 
@@ -122,9 +123,9 @@ class AuthServiceTest extends IntegrationTestSupport {
                 .password(password)
                 .email("test@example.com")
                 .role(LAB)
-                .build();
+                .build(); // 해당 회원가입 요청이 되지 않은 상태에서
 
-        LoginRequest validLoginRequest = new LoginRequest(testUsername, password);
+        LoginRequest validLoginRequest = new LoginRequest(testUsername, password); // 로그인 요청이 날아간다.
 
         // When // Then
         StepVerifier.create(authService.login(validLoginRequest))

@@ -32,8 +32,9 @@ public class RedisConfig {
 
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(cacheConfiguration)
-                .withCacheConfiguration("user", cacheConfiguration.entryTtl(Duration.ofMinutes(30)))
-                .withCacheConfiguration("chatPI", cacheConfiguration.entryTtl(Duration.ofMinutes(30)))
+//                .withCacheConfiguration("UserId", cacheConfiguration.entryTtl(Duration.ofMinutes(30))) 나중에 필요할 때 살릴 캐시
+                .withCacheConfiguration("Username", cacheConfiguration.entryTtl(Duration.ofMinutes(30)))
+                .withCacheConfiguration("ChatPI", cacheConfiguration.entryTtl(Duration.ofMinutes(30)))
                 .build();
     }
 

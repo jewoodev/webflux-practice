@@ -17,7 +17,7 @@ public class UnreadChatController {
 
     private final UnreadChatService unreadChatService;
 
-    @GetMapping("/info")
+    @GetMapping("/info") // 자신에게 수신된 채팅 중에 읽지 않은 채팅들을 조회한다.
     public Flux<UnreadChatResponse> getOwnUnreadChat(@AuthenticationPrincipal UserDetailsImpl userDetails) {
         return unreadChatService.getOwnByUserDetails(userDetails);
     }
