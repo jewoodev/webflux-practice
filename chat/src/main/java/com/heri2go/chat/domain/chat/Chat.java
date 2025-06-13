@@ -19,7 +19,8 @@ public class Chat extends BaseTimeEntity {
 
     @Id
     private String id;
-    private String content;
+    private String originalContent;
+    private String translatedContent;
     private String sender;
     private Set<String> unreadUsernames; // 읽음 처리할 용도
 
@@ -29,9 +30,10 @@ public class Chat extends BaseTimeEntity {
     private Double sentimentScore;
 
     @Builder
-    private Chat(String content, String sender, Set<String> unreadUsernames, 
-                    String roomId, String lang, Double sentimentScore) {
-        this.content = content;
+    private Chat(String originalContent, String translatedContent, String sender, Set<String> unreadUsernames,
+                 String roomId, String lang, Double sentimentScore) {
+        this.originalContent = originalContent;
+        this.translatedContent = translatedContent;
         this.sender = sender;
         this.unreadUsernames = unreadUsernames;
         this.roomId = roomId;
@@ -41,7 +43,8 @@ public class Chat extends BaseTimeEntity {
 
     public static Chat from(ChatCreateRequest req) { // 메세지 Request 로부터 최초로 생성하는 Chat
         return Chat.builder()
-                .content(req.content())
+                .originalContent(req.originalContent())
+                .translatedContent(req.translatedContent())
                 .sender(req.sender())
                 .unreadUsernames(req.unreadUsernames())
                 .roomId(req.roomId())

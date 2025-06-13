@@ -51,7 +51,7 @@ class UnreadChatControllerTest extends MockTestSupport {
                 .chatId("Test chat id")
                 .unreadUsername("Test username what don't read")
                 .sender("Test sender")
-                .content("Test content")
+                .content("Test originalContent")
                 .build();
 
         // when

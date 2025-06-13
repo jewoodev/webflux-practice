@@ -34,7 +34,7 @@ public class SentimentService {
             Map<String, Object> requestBody = Map.of(
                 "document", Map.of(
                     "type", "PLAIN_TEXT",
-                    "content", text
+                    "originalContent", text
                 )
             );
             

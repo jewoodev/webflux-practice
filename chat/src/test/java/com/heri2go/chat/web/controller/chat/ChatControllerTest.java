@@ -58,7 +58,7 @@ class ChatControllerTest extends MockTestSupport {
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
         Chat testChat = Chat.builder()
-                        .content("Test chat content")
+                        .content("Test chat originalContent")
                         .sender("Test chat sender")
                         .unreadUsernames(Set.of("Lab chief", "Lab staff 1", "Lab staff 2", "Dentist"))
                         .roomId("Test room id")

@@ -76,5 +76,4 @@ public class TranslateService {
                     return Mono.just(text);
                 });
     }
-
 }

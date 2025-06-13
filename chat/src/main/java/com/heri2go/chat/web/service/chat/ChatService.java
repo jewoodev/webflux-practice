@@ -22,10 +22,12 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Service
 public class ChatService {
+
     private final ChatRepository chatRepository;
     private final ChatConverter chatConverter;
     private final UnreadChatService unreadChatService;
     private final ChatRoomService chatRoomService;
+    private final TranslateService translateService;
 
     public Mono<Chat> save(ChatCreateRequest req) {
         return chatRepository.save(Chat.from(req));
@@ -40,20 +42,23 @@ public class ChatService {
                 .map(ChatResponse::from);
     }
 
-    public Mono<String> processMessage(ChatCreateRequest req) {
+    public Mono<ChatResponse> processMessage(ChatCreateRequest req) {
         return Mono.defer(() -> {
-            if (req.content() == null || req.content().isEmpty()) {
+            if (req.originalContent() == null || req.originalContent().isEmpty()) {
                 log.error("메세지 내용이 비어있어 에러 발생");
                 return Mono.error(new MessageInvalidException("메세지 내용이 비어있어 에러 발생"));
             }
 
+            String targetLang = req.lang().equals("en") ? "ko" : "en";
+
             // 모든 채팅은 저장된 후,
             // 채팅방의 '마지막 채팅에 대한 정보'를 갱신하고
             // UnreadChat(단일 유저에게 수신된 메세지 중에 확인하지 않은 메세지 정보)를 추가적으로 저장해야 한다.
-            return this.save(req)
+            return translateService.translate(req.originalContent(), req.lang(), targetLang)
+                    .map(translatedContent -> ChatCreateRequest.withTranslatedMsg(req, translatedContent))
+                    .flatMap(this::save)
                     .flatMap(chatRoomService::updateAboutLastChat)
                     .flatMap(unreadChatService::save)
-                    .flatMap(chatConverter::convertToJson)
                     .onErrorResume(JsonProcessingException.class, e -> {
                         log.error("메세지 저장 후 응답 Dto로 변환 중 에러 발생: ", e);
                         return Mono.error(new JsonConvertException("메세지 저장 후 응답 Dto로 변환 중 에러 발생"));

@@ -104,7 +104,7 @@ public class ChatRoomService {
         return mongoTemplate.updateFirst(
                 Query.query(Criteria.where("_id").is(chat.getRoomId())),
                 new Update()
-                        .set("lastMessage", chat.getContent())
+                        .set("lastMessage", chat.getOriginalContent())
                         .set("lastSender", chat.getSender())
                         .set("lastMessageTime", chat.getCreatedAt())
                         .set("updatedAt", chat.getCreatedAt()),

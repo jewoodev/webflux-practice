@@ -50,9 +50,9 @@ class ChatRepositoryTest extends MongoTestSupport {
 
         // when // then
         StepVerifier.create(chatRepository.findByRoomId("1"))
-                .expectNextMatches(chat -> chat.getContent().equals("첫 번째 메시지"))
-                .expectNextMatches(chat -> chat.getContent().equals("두 번째 메시지"))
-                .expectNextMatches(chat -> chat.getContent().equals("세 번째 메시지"))
+                .expectNextMatches(chat -> chat.getOriginalContent().equals("첫 번째 메시지"))
+                .expectNextMatches(chat -> chat.getOriginalContent().equals("두 번째 메시지"))
+                .expectNextMatches(chat -> chat.getOriginalContent().equals("세 번째 메시지"))
                 .verifyComplete();
     }
 

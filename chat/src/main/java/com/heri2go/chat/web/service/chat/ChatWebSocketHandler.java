@@ -121,34 +121,34 @@ public class ChatWebSocketHandler implements WebSocketHandler {
                         case TALK:
                             return handleChatMessage(chatMessage);
                         default:
-                            return Mono.error(new IllegalArgumentException("Unknown content type in Chat"));
+                            return Mono.error(new IllegalArgumentException("Unknown originalContent type in Chat"));
                     }
                 })
                 .onErrorResume(UnauthorizedException.class, e -> sendErrorMessage(session, e.getMessage()))
                 .onErrorResume(e -> {
-                    log.error("Unexpected error processing content: ", e);
+                    log.error("Unexpected error processing originalContent: ", e);
                     return sendErrorMessage(session, "메시지 처리 중 오류가 발생했습니다.");
                 });
     }
 
     private Mono<Void> handleEnterMessage(ChatCreateRequest message) {
-        return publishMessage(message);
+        return publishMessage(message, message.roomId());
     }
 
     private Mono<Void> handleLeaveMessage(WebSocketSession session, ChatCreateRequest message, String userId) {
         return sessionManager.removeRoomSession(session.getId(), userId)
-                .then(publishMessage(message));
+                .then(publishMessage(message, message.roomId()));
     }
 
     private Mono<Void> handleChatMessage(ChatCreateRequest message) {
         return chatService.processMessage(message)
-                .flatMap(jsonMessage -> publishMessage(message));
+                .flatMap(chatResponse -> publishMessage(chatResponse, chatResponse.getRoomId()));
     }
 
-    private Mono<Void> publishMessage(ChatCreateRequest chatMessage) {
+    private Mono<Void> publishMessage(Object chatMessage, String roomId) {
         return chatConverter.convertToJson(chatMessage)
                 .flatMap(message -> redisDao.convertAndSend(
-                        cip.getRoomSessionsKey(chatMessage.roomId()),
+                        cip.getRoomSessionsKey(roomId),
                         message))
                 .doOnError(error -> log.error("Error publishing message: ", error))
                 .then();
@@ -165,7 +165,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
             if (session != null && session.isOpen()) {
                 return session.send(Mono.just(session.textMessage(message)))
                         .onErrorResume(e -> {
-                            log.error("Failed to send content to session {}: ", sessionId, e);
+                            log.error("Failed to send originalContent to session {}: ", sessionId, e);
                             return Mono.error(e);
                         });
             }
@@ -176,7 +176,7 @@ public class ChatWebSocketHandler implements WebSocketHandler {
     private Mono<Void> sendErrorMessage(WebSocketSession session, String errorMessage) {
         return session.send(Mono.just(session.textMessage(errorMessage)))
                 .onErrorResume(e -> {
-                    log.error("Error sending error content: ", e);
+                    log.error("Error sending error originalContent: ", e);
                     return Mono.empty();
                 });
     }

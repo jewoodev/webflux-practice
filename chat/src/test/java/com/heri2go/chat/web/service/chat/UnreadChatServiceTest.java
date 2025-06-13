@@ -47,7 +47,7 @@ class UnreadChatServiceTest extends IntegrationTestSupport {
                 .chatId("Test chat id")
                 .unreadUsername(testUsername)
                 .sender("Test chat sender")
-                .content("Test chat content")
+                .content("Test chat originalContent")
                 .build();
 
         unreadChatRepository.save(testUnreadChat)

@@ -12,6 +12,7 @@ import com.heri2go.chat.web.service.chatroom.response.ChatRoomResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.util.HashSet;
@@ -55,7 +56,7 @@ class ChatServiceTest extends IntegrationTestSupport {
                 .block();
 
         ChatCreateRequest validChatCreateRequest = ChatCreateRequest.builder()
-                .content(chatContent)
+                .originalContent(chatContent)
                 .sender(testUsername)
                 .unreadUsernames(Set.of(testUsername))
                 .roomId(testRoomId)
@@ -66,7 +67,7 @@ class ChatServiceTest extends IntegrationTestSupport {
         StepVerifier.create(chatService.save(validChatCreateRequest))
                 .expectNextMatches(chat -> chat.getRoomId().equals(validChatCreateRequest.roomId()) &&
                         chat.getSender().equals(validChatCreateRequest.sender()) &&
-                        chat.getContent().equals(validChatCreateRequest.content()))
+                        chat.getOriginalContent().equals(validChatCreateRequest.originalContent()))
                 .verifyComplete();
     }
 

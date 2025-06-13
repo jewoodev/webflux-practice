@@ -37,7 +37,7 @@ public class UnreadChat extends BaseTimeEntity {
                         .chatId(chat.getId())
                         .unreadUsername(unreadUsername)
                         .sender(chat.getSender())
-                        .content(chat.getContent())
+                        .content(chat.getOriginalContent())
                         .build());
     }
 }

@@ -2,7 +2,6 @@ package com.heri2go.chat;
 
 import com.heri2go.chat.domain.RedisDao;
 import com.heri2go.chat.domain.chat.UnreadChatRepository;
-import com.heri2go.chat.domain.chatroom.ChatRoomRepository;
 import com.heri2go.chat.domain.token.RefreshHashRepository;
 import com.heri2go.chat.domain.user.UserRepository;
 import com.heri2go.chat.web.service.auth.AuthService;
@@ -46,9 +45,6 @@ public abstract class IntegrationTestSupport {
 
     @Autowired
     protected ChatRoomService chatRoomService;
-
-    @Autowired
-    protected ChatRoomRepository chatRoomRepository;
 
     @Autowired
     protected RefreshHashRepository refreshHashRepository;
