@@ -4,6 +4,9 @@ import com.heri2go.chat.web.exception.InvalidJwtTokenException;
 import com.heri2go.chat.web.service.auth.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
@@ -12,6 +15,9 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
+
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -34,9 +40,25 @@ public class JwtAuthenticationFilter implements WebFilter {
                     })
                     .onErrorResume(InvalidJwtTokenException.class, e -> {
                         log.error("Authentication failed: {}", e.getMessage());
-                        return chain.filter(exchange);
+                        return handleInvalidJwtTokenError(exchange, e);
                     });
         });
+    }
+
+    private Mono<Void> handleInvalidJwtTokenError(ServerWebExchange exchange, InvalidJwtTokenException e) {
+        ServerHttpResponse response = exchange.getResponse();
+        response.setStatusCode(HttpStatus.UNAUTHORIZED);
+        response.getHeaders().add("Content-Type", "application/json");
+
+        String errorResponse = """
+                {
+                    "error": "Unauthorized",
+                    "message": "%s",
+                    "timestamp": "%s"
+                }""".formatted(e.getMessage(), Instant.now().toString());
+
+        DataBuffer buffer = response.bufferFactory().wrap(errorResponse.getBytes(StandardCharsets.UTF_8));
+        return response.writeWith(Mono.just(buffer));
     }
 
     private boolean checkExceptionPath(ServerWebExchange exchange) {
