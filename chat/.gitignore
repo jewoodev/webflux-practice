@@ -37,7 +37,8 @@ out/
 .vscode/
 /src/main/resources/application.yml
 /src/main/resources/firm-progress-457001-t5-9d0006cd9307.json
-/docs/*
 /src/test/java/com/heri2go/chat/step/
 /src/main/java/com/heri2go/chat/example/
 /src/main/resources/keystore.p12
+/img/번역API/
+/docs/아이디어.md

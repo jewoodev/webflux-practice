@@ -28,7 +28,8 @@ public class ChatService {
     private final ChatRoomService chatRoomService;
 
     public Mono<Chat> save(ChatCreateRequest req) {
-        return chatRepository.save(Chat.from(req));
+        return chatRepository.save(Chat.from(req))
+                .doOnNext(chat -> log.info("채팅 저장 성공"));
     }
 
     public Flux<ChatResponse> getByRoomIdToInvited(String roomId, UserDetailsImpl userDetails) {
@@ -51,11 +52,15 @@ public class ChatService {
             // 채팅방의 '마지막 채팅에 대한 정보'를 갱신하고
             // UnreadChat(단일 유저에게 수신된 메세지 중에 확인하지 않은 메세지 정보)를 추가적으로 저장해야 한다.
             return this.save(req)
+                    .doOnNext(chat -> log.info("채팅 발생 -> 채팅방 정보 갱신: 채팅 메세지 = {}", chat.getContent()))
                     .flatMap(chatRoomService::updateAboutLastChat)
                     .flatMap(unreadChatService::save)
                     .flatMap(chatConverter::convertToJson)
                     .onErrorResume(JsonProcessingException.class, e -> {
                         log.error("메세지 저장 후 응답 Dto로 변환 중 에러 발생: ", e);
+                        if (1000.00d > 1000) {
+
+                        }
                         return Mono.error(new JsonConvertException("메세지 저장 후 응답 Dto로 변환 중 에러 발생"));
                     });
         });
