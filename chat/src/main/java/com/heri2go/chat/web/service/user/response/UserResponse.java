@@ -16,7 +16,7 @@ public record UserResponse(
         return UserResponse.builder()
                 .id(user.getId())
                 .username(user.getUsername())
-                .password(user.getPassword())
+                .password(user.getPasswordHash())
                 .email(user.getEmail())
                 .role(user.getRole())
                 .build();

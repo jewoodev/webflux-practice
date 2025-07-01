@@ -24,7 +24,7 @@ class UserRepositoryTest extends MongoTestSupport {
         userRepository.save(
                 User.builder()
                         .username("Test username")
-                        .password("Test password")
+                        .passwordHash("Test password")
                         .email("Test email")
                         .role(LAB)
                         .build()
@@ -47,7 +47,7 @@ class UserRepositoryTest extends MongoTestSupport {
         User savedUser = userRepository.save(
                 User.builder()
                         .username(testUsername)
-                        .password(testPassword)
+                        .passwordHash(testPassword)
                         .email(testEmail)
                         .role(LAB)
                         .build()
@@ -57,7 +57,7 @@ class UserRepositoryTest extends MongoTestSupport {
         StepVerifier.create(userRepository.findById(savedUser.getId()))
                 // then
                 .expectNextMatches(user -> user.getUsername().equals(testUsername) &&
-                        user.getPassword().equals(testPassword) &&
+                        user.getPasswordHash().equals(testPassword) &&
                         user.getEmail().equals(testEmail) &&
                         user.getRole().equals(LAB)
                 )
@@ -74,7 +74,7 @@ class UserRepositoryTest extends MongoTestSupport {
         userRepository.save(
                 User.builder()
                         .username(testUsername)
-                        .password(testPassword)
+                        .passwordHash(testPassword)
                         .email(testEmail)
                         .role(LAB)
                         .build()
@@ -84,7 +84,7 @@ class UserRepositoryTest extends MongoTestSupport {
         StepVerifier.create(userRepository.findByUsername(testUsername))
                 // then
                 .expectNextMatches(user -> user.getUsername().equals(testUsername) &&
-                        user.getPassword().equals(testPassword) &&
+                        user.getPasswordHash().equals(testPassword) &&
                         user.getEmail().equals(testEmail) &&
                         user.getRole().equals(LAB)
                 )

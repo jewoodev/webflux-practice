@@ -6,38 +6,57 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Objects;
+
+import static org.springframework.util.Assert.state;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Document
 public class User extends BaseTimeEntity {
-
-    @Id
     private String id;
 
     @Indexed(unique = true)
     private String username;
-    private String password;
+
+    private String passwordHash;
+
     private String email;
+
     private Role role;
 
+    private UserStatus status;
+
     @Builder
-    private User(String username, String password, String email, Role role) {
-        this.username = username;
-        this.password = password;
-        this.email = email;
-        this.role = role;
+    private User(String username, String passwordHash, String email, Role role, UserStatus status) {
+        this.username = Objects.requireNonNull(username);
+        this.passwordHash = Objects.requireNonNull(passwordHash);
+        this.email = Objects.requireNonNull(email);
+        this.role = Objects.requireNonNull(role);
+        this.status = UserStatus.PENDING;
     }
 
     public static User from(UserRegisterRequest req) {
         return User.builder()
                 .username(req.username())
-                .password(req.password())
+                .passwordHash(req.password())
                 .email(req.email())
                 .role(req.role())
                 .build();
+    }
+
+    public void activate() {
+        state(status == UserStatus.PENDING, "PENDING 상태가 아닙니다.");
+
+        this.status = UserStatus.ACTIVE;
+    }
+
+    public void deactivate() {
+        state(status == UserStatus.ACTIVE, "ACTIVE 상태가 아닙니다.");
+
+        this.status = UserStatus.DEACTIVATED;
     }
 }
