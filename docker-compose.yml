@@ -1,0 +1,39 @@
+services:
+  mysql:
+    image: mysql:lts-oraclelinux9
+    platform: linux/x86_64
+    restart: always
+    user: mysql
+    volumes:
+      - ./data:/var/lib/mysql:rw
+      - ./config:/etc/mysql/conf.d:rw
+      - ./init:/docker-entrypoint-initdb.d:rw
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: my1234
+      TZ: Asia/Seoul
+      MYSQL_USER: jewoo
+      MYSQL_PASSWORD: 1234
+      MYSQL_DATABASE: chat
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    hostname: redis
+    volumes:
+      - ./redis_data:/data
+    ports:
+      - "6379:6379"
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: redis_insight
+    restart: always
+    ports:
+      - "5540:5540"
+    volumes:
+      - ./redis_insight_data:/data
+    depends_on:
+      - redis
