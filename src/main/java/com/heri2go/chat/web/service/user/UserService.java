@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -16,17 +15,16 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-//    @Cacheable(value = "UserId", key = "#p0", cacheManager = "cacheManager", unless = "#result == null") 나중에 필요할 때 살릴 캐시
-    public Mono<UserResponse> getById(String userId) {
+    public UserResponse getById(Long userId) {
         return userRepository.findById(userId)
                 .map(UserResponse::from)
-                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found.")));
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
     }
 
     @Cacheable(value = "UserResp", key = "#p0", cacheManager = "cacheManager", unless = "#result == null")
-    public Mono<UserResponse> getByUsername(String username) {
+    public UserResponse getByUsername(String username) {
         return userRepository.findByUsername(username)
                 .map(UserResponse::from)
-                .switchIfEmpty(Mono.error(new UserNotFoundException("User not found.")));
+                .orElseThrow(() -> new UserNotFoundException("User not found."));
     }
 }

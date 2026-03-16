@@ -2,37 +2,38 @@ package com.heri2go.chat.web.service.chat;
 
 import com.heri2go.chat.IntegrationTestSupport;
 import com.heri2go.chat.domain.chat.Chat;
-import com.heri2go.chat.domain.user.User;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.web.controller.auth.request.UserRegisterRequest;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
 import com.heri2go.chat.web.controller.chatroom.request.ChatRoomCreateRequest;
 import com.heri2go.chat.web.exception.ResourceNotFoundException;
+import com.heri2go.chat.web.service.chat.response.ChatResponse;
 import com.heri2go.chat.web.service.chatroom.response.ChatRoomResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import reactor.test.StepVerifier;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static com.heri2go.chat.domain.user.Role.LAB;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ChatServiceTest extends IntegrationTestSupport {
 
     private final String testUsername = "Test username";
-    private String testRoomId;
+    private Long testRoomId;
 
     @AfterEach
     void tearDown() {
-        mongoTemplate.dropCollection(Chat.class)
-                .then(mongoTemplate.createCollection(Chat.class))
-                .then(mongoTemplate.dropCollection(User.class))
-                .then(mongoTemplate.createCollection(User.class))
-                .then(redisDao.delete("UserResp::" + testUsername))
-                .then(redisDao.delete("ChatPI::" + testRoomId))
-                .block();
+        chatRoomRepository.deleteAll();
+        userRepository.deleteAll();
+        redisDao.delete("UserResp::" + testUsername);
+        if (testRoomId != null) {
+            redisDao.delete("ChatPI::" + testRoomId);
+        }
     }
 
     @DisplayName("유효한 메세지 저장 요청을 받으면 저장에 성공하고 응답 dto를 반환한다.")
@@ -40,8 +41,8 @@ class ChatServiceTest extends IntegrationTestSupport {
     void saveSuccessfulThroughValidRequest() {
         //Given
         String testPassword = "Test password";
-        String testRoomId = "101";
-        String chatContent = "Hello, WebFlux!";;
+        Long testRoomId = 101L;
+        String chatContent = "Hello, WebFlux!";
 
         UserRegisterRequest validRegisterRequest = UserRegisterRequest.builder()
                 .username(testUsername)
@@ -50,9 +51,8 @@ class ChatServiceTest extends IntegrationTestSupport {
                 .role(LAB)
                 .build();
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
-                .then(userDetailsService.findByUsername(testUsername))
-                .block();
+        authService.register(validRegisterRequest);
+        UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(testUsername);
 
         ChatCreateRequest validChatCreateRequest = ChatCreateRequest.builder()
                 .content(chatContent)
@@ -62,12 +62,13 @@ class ChatServiceTest extends IntegrationTestSupport {
                 .lang("en")
                 .build();
 
-        // When // Then
-        StepVerifier.create(chatService.save(validChatCreateRequest))
-                .expectNextMatches(chat -> chat.getRoomId().equals(validChatCreateRequest.roomId()) &&
-                        chat.getSender().equals(validChatCreateRequest.sender()) &&
-                        chat.getContent().equals(validChatCreateRequest.content()))
-                .verifyComplete();
+        // When
+        Chat savedChat = chatService.save(validChatCreateRequest);
+
+        // Then
+        assertThat(savedChat.getRoomId()).isEqualTo(validChatCreateRequest.roomId());
+        assertThat(savedChat.getSender()).isEqualTo(validChatCreateRequest.sender());
+        assertThat(savedChat.getContent()).isEqualTo(validChatCreateRequest.content());
     }
 
     @DisplayName("유저는 자신이 참여 중이며 존재하는 채팅방의 채팅들은 조회할 수 있다.")
@@ -84,13 +85,12 @@ class ChatServiceTest extends IntegrationTestSupport {
                 .role(LAB)
                 .build();
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
-                .then(userDetailsService.findByUsername(testUsername))
-                .block();
+        authService.register(validRegisterRequest);
+        UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(testUsername);
 
         // 유저는 채팅을 치기 위해선 참여 중인 채팅방이 필요하다.
 
-        Set<String> participantIds = new HashSet<>();
+        Set<Long> participantIds = new HashSet<>();
         participantIds.add(userDetails.getUserId());
 
         ChatRoomCreateRequest chatRoomCreateRequest = ChatRoomCreateRequest.builder()
@@ -99,8 +99,7 @@ class ChatServiceTest extends IntegrationTestSupport {
                 .participantIds(participantIds)
                 .build();
 
-        ChatRoomResponse chatRoomResponse = chatRoomService.save(chatRoomCreateRequest)
-                .block();
+        ChatRoomResponse chatRoomResponse = chatRoomService.save(chatRoomCreateRequest);
         testRoomId = chatRoomResponse.id();
 
         // 참여 중인 채팅방이 있을 때 채팅이 저장될 수 있다.
@@ -113,16 +112,17 @@ class ChatServiceTest extends IntegrationTestSupport {
                 .lang("en")
                 .build();
 
-        chatService.save(validChatCreateRequest)
-                .block();
+        chatService.save(validChatCreateRequest);
 
         // When
-        StepVerifier.create(chatService.getByRoomIdToInvited(testRoomId, userDetails))
-                // Then
-                .expectNextMatches(resp -> resp.roomId().equals(testRoomId) &&
-                        resp.sender().equals(testUsername) &&
-                        resp.content().equals(chatContent))
-                .verifyComplete();
+        List<ChatResponse> responses = chatService.getByRoomIdToInvited(testRoomId, userDetails);
+
+        // Then
+        assertThat(responses).hasSize(1);
+        ChatResponse resp = responses.get(0);
+        assertThat(resp.roomId()).isEqualTo(testRoomId);
+        assertThat(resp.sender()).isEqualTo(testUsername);
+        assertThat(resp.content()).isEqualTo(chatContent);
     }
 
     @DisplayName("채팅이 없는 채팅방을 조회하면 실패한다.")
@@ -130,8 +130,8 @@ class ChatServiceTest extends IntegrationTestSupport {
     void getEmptyChat_IfNonChatRoomIsQueried() {
         // Given
         String testPassword = "Test password";
-        String chatContent = "Hello, WebFlux!";;
-        testRoomId = "101";
+        String chatContent = "Hello, WebFlux!";
+        testRoomId = 101L;
 
         UserRegisterRequest validRegisterRequest = UserRegisterRequest.builder()
                 .username(testUsername)
@@ -140,9 +140,8 @@ class ChatServiceTest extends IntegrationTestSupport {
                 .role(LAB)
                 .build();
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authService.register(validRegisterRequest)
-                .then(userDetailsService.findByUsername(testUsername))
-                .block();
+        authService.register(validRegisterRequest);
+        UserDetailsImpl userDetails = (UserDetailsImpl) userDetailsService.loadUserByUsername(testUsername);
 
         ChatCreateRequest validChatCreateRequest = ChatCreateRequest.builder()
                 .content(chatContent)
@@ -152,12 +151,10 @@ class ChatServiceTest extends IntegrationTestSupport {
                 .lang("en")
                 .build();
 
-        chatService.save(validChatCreateRequest)
-                .block();
+        chatService.save(validChatCreateRequest);
 
-        // Then
-        StepVerifier.create(chatService.getByRoomIdToInvited("999", userDetails))
-                .expectError(ResourceNotFoundException.class)
-                .verify();
+        // When // Then
+        assertThatThrownBy(() -> chatService.getByRoomIdToInvited(999L, userDetails))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 }

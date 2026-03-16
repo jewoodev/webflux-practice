@@ -1,12 +1,10 @@
 package com.heri2go.chat.web.service.chat;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.heri2go.chat.domain.chat.Chat;
 import com.heri2go.chat.domain.chat.ChatRepository;
 import com.heri2go.chat.domain.user.UserDetailsImpl;
 import com.heri2go.chat.util.chat.ChatConverter;
 import com.heri2go.chat.web.controller.chat.request.ChatCreateRequest;
-import com.heri2go.chat.web.exception.JsonConvertException;
 import com.heri2go.chat.web.exception.MessageInvalidException;
 import com.heri2go.chat.web.exception.ResourceNotFoundException;
 import com.heri2go.chat.web.exception.UnauthorizedException;
@@ -15,8 +13,10 @@ import com.heri2go.chat.web.service.chatroom.ChatRoomService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -27,42 +27,38 @@ public class ChatService {
     private final UnreadChatService unreadChatService;
     private final ChatRoomService chatRoomService;
 
-    public Mono<Chat> save(ChatCreateRequest req) {
-        return chatRepository.save(Chat.from(req))
-                .doOnNext(chat -> log.info("채팅 저장 성공"));
+    @Transactional
+    public Chat save(ChatCreateRequest req) {
+        Chat chat = chatRepository.save(Chat.from(req));
+        log.info("채팅 저장 성공");
+        return chat;
     }
 
-    public Flux<ChatResponse> getByRoomIdToInvited(String roomId, UserDetailsImpl userDetails) {
-        return chatRoomService.getParticipantIdsById(roomId)
-                .switchIfEmpty(Mono.error(new ResourceNotFoundException("존재하지 않는 채팅방으로의 접근입니다.")))
-                .filter(paricipantIds -> paricipantIds.contains(userDetails.getUserId()))
-                .switchIfEmpty(Mono.error(new UnauthorizedException("접근 권한이 없는 채팅방입니다.")))
-                .thenMany(chatRepository.findByRoomId(roomId))
-                .map(ChatResponse::from);
+    @Transactional(readOnly = true)
+    public List<ChatResponse> getByRoomIdToInvited(Long roomId, UserDetailsImpl userDetails) {
+        Set<Long> participantIds = chatRoomService.getParticipantIdsById(roomId);
+        if (participantIds == null) {
+            throw new ResourceNotFoundException("존재하지 않는 채팅방으로의 접근입니다.");
+        }
+        if (!participantIds.contains(userDetails.getUserId())) {
+            throw new UnauthorizedException("접근 권한이 없는 채팅방입니다.");
+        }
+        return chatRepository.findByRoomId(roomId).stream()
+                .map(ChatResponse::from)
+                .toList();
     }
 
-    public Mono<String> processMessage(ChatCreateRequest req) {
-        return Mono.defer(() -> {
-            if (req.content() == null || req.content().isEmpty()) {
-                log.error("메세지 내용이 비어있어 에러 발생");
-                return Mono.error(new MessageInvalidException("메세지 내용이 비어있어 에러 발생"));
-            }
+    @Transactional
+    public String processMessage(ChatCreateRequest req) {
+        if (req.content() == null || req.content().isEmpty()) {
+            log.error("메세지 내용이 비어있어 에러 발생");
+            throw new MessageInvalidException("메세지 내용이 비어있어 에러 발생");
+        }
 
-            // 모든 채팅은 저장된 후,
-            // 채팅방의 '마지막 채팅에 대한 정보'를 갱신하고
-            // UnreadChat(단일 유저에게 수신된 메세지 중에 확인하지 않은 메세지 정보)를 추가적으로 저장해야 한다.
-            return this.save(req)
-                    .doOnNext(chat -> log.info("채팅 발생 -> 채팅방 정보 갱신: 채팅 메세지 = {}", chat.getContent()))
-                    .flatMap(chatRoomService::updateAboutLastChat)
-                    .flatMap(unreadChatService::save)
-                    .flatMap(chatConverter::convertToJson)
-                    .onErrorResume(JsonProcessingException.class, e -> {
-                        log.error("메세지 저장 후 응답 Dto로 변환 중 에러 발생: ", e);
-                        if (1000.00d > 1000) {
-
-                        }
-                        return Mono.error(new JsonConvertException("메세지 저장 후 응답 Dto로 변환 중 에러 발생"));
-                    });
-        });
+        Chat chat = this.save(req);
+        log.info("채팅 발생 -> 채팅방 정보 갱신: 채팅 메세지 = {}", chat.getContent());
+        chatRoomService.updateAboutLastChat(chat);
+        ChatResponse chatResponse = unreadChatService.save(chat);
+        return chatConverter.convertToJson(chatResponse);
     }
 }

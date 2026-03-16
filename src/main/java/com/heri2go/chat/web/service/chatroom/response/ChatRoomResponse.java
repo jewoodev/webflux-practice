@@ -8,10 +8,10 @@ import java.util.Set;
 
 @Builder
 public record ChatRoomResponse(
-        String id,
+        Long id,
         String orderId,
         String roomName,
-        Set<String> participantIds,
+        Set<Long> participantIds,
         String lastMessage,
         String lastSender,
         LocalDateTime lastMessageTime

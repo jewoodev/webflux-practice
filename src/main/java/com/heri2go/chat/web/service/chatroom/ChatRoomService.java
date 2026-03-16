@@ -17,13 +17,8 @@ import com.heri2go.chat.web.service.user.UserService;
 import com.heri2go.chat.web.service.user.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -34,81 +29,75 @@ public class ChatRoomService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatRoomParticipantRepository chatRoomParticipantRepository;
-    private final ReactiveMongoTemplate mongoTemplate;
     private final ChatRoomParticipantService chatRoomParticipantService;
     private final UserService userService;
     private final RedisSessionManager sessionManager;
     private final RedisDao redisDao;
     private final ConnectInfoProvider cip;
 
-    public Mono<ChatRoomResponse> save(ChatRoomCreateRequest request) {
-        return validateParticipants(request)
-                .flatMap(userResponses -> createChatRoom(request)
-                        .flatMap(chatRoom -> saveParticipants(chatRoom, userResponses))
-                )
-                .flatMap(chatRoom -> updateSessionInfo(chatRoom))
-                .map(ChatRoomResponse::from);
+    @Transactional
+    public ChatRoomResponse save(ChatRoomCreateRequest request) {
+        List<UserResponse> userResponses = validateParticipants(request);
+        ChatRoom chatRoom = chatRoomRepository.save(ChatRoom.from(request));
+        saveParticipants(chatRoom, userResponses);
+        updateSessionInfo(chatRoom);
+        return ChatRoomResponse.from(chatRoom);
     }
 
-    private Mono<List<UserResponse>> validateParticipants(ChatRoomCreateRequest request) {
-        return Flux.fromIterable(request.participantIds())
-                .flatMap(userService::getById)
-                .collectList()
-                .flatMap(users -> {
-                    if (users.size() != request.participantIds().size()) {
-                        return Mono.error(new UserNotFoundException("One or more participants not found"));
-                    }
-                    return Mono.just(users);
-                });
+    private List<UserResponse> validateParticipants(ChatRoomCreateRequest request) {
+        List<UserResponse> users = request.participantIds().stream()
+                .map(userService::getById)
+                .toList();
+        if (users.size() != request.participantIds().size()) {
+            throw new UserNotFoundException("One or more participants not found");
+        }
+        return users;
     }
 
-    private Mono<ChatRoom> createChatRoom(ChatRoomCreateRequest request) {
-        return chatRoomRepository.save(ChatRoom.from(request));
-    }
-
-    private Mono<ChatRoom> saveParticipants(ChatRoom chatRoom, List<UserResponse> userResponses) {
-        return Flux.fromIterable(userResponses)
+    private void saveParticipants(ChatRoom chatRoom, List<UserResponse> userResponses) {
+        List<ChatRoomParticipant> participants = userResponses.stream()
                 .map(userResponse -> ChatRoomParticipant.from(userResponse, chatRoom.getId()))
-                .collectList()
-                .flatMap(crp -> chatRoomParticipantRepository.saveAll(crp)
-                        .then(Mono.just(chatRoom)));
+                .toList();
+        chatRoomParticipantRepository.saveAll(participants);
     }
 
-    private Mono<ChatRoom> updateSessionInfo(ChatRoom chatRoom) {
-        return Flux.fromIterable(chatRoom.getParticipantIds())
-                .flatMap(participantId -> {
-                    String sessionIdKey = cip.getSessionIdKey(participantId);
-                    return redisDao.getString(sessionIdKey)
-                            .flatMap(sessionId ->
-                                sessionManager.saveRoomSession(sessionId, chatRoom.getId(), participantId)
-                            );
-                })
-                .then(Mono.just(chatRoom));
+    private void updateSessionInfo(ChatRoom chatRoom) {
+        for (Long participantId : chatRoom.getParticipantIds()) {
+            String sessionIdKey = cip.getSessionIdKey(String.valueOf(participantId));
+            String sessionId = redisDao.getString(sessionIdKey);
+            if (sessionId != null) {
+                sessionManager.saveRoomSession(sessionId, String.valueOf(chatRoom.getId()), String.valueOf(participantId));
+            }
+        }
     }
 
     @Cacheable(value = "ChatPI", key = "#p0", cacheManager = "cacheManager", unless = "#result == null")
-    public Mono<Set<String>> getParticipantIdsById(String id) {
+    public Set<Long> getParticipantIdsById(Long id) {
         return chatRoomRepository.findById(id)
-                .map(ChatRoom::getParticipantIds);
+                .map(ChatRoom::getParticipantIds)
+                .orElse(null);
     }
 
-    public Flux<ChatRoomResponse> getOwnChatRoomResponse(UserDetailsImpl userDetails) {
-        return chatRoomParticipantService.getAllByUserId(userDetails.getUserId())
-                .flatMap(chatRoomParticipant ->
-                        chatRoomRepository.findById(chatRoomParticipant.getChatRoomId())
-                .map(ChatRoomResponse::from))
-                .switchIfEmpty(Mono.error(new ChatRoomNotFoundException("참여 중인 채팅방이 없습니다.")));
+    @Transactional(readOnly = true)
+    public List<ChatRoomResponse> getOwnChatRoomResponse(UserDetailsImpl userDetails) {
+        List<ChatRoomParticipant> participants = chatRoomParticipantService.getAllByUserId(userDetails.getUserId());
+        if (participants.isEmpty()) {
+            throw new ChatRoomNotFoundException("참여 중인 채팅방이 없습니다.");
+        }
+        return participants.stream()
+                .map(participant -> chatRoomRepository.findById(participant.getChatRoomId())
+                        .map(ChatRoomResponse::from)
+                        .orElse(null))
+                .filter(response -> response != null)
+                .toList();
     }
 
-    public Mono<Chat> updateAboutLastChat(Chat chat) {
-        return mongoTemplate.updateFirst(
-                Query.query(Criteria.where("_id").is(chat.getRoomId())),
-                new Update()
-                        .set("lastMessage", chat.getContent())
-                        .set("lastSender", chat.getSender())
-                        .set("lastMessageTime", chat.getCreatedAt())
-                        .set("updatedAt", chat.getCreatedAt()),
-                ChatRoom.class
-        ).then(Mono.just(chat));
+    @Transactional
+    public void updateAboutLastChat(Chat chat) {
+        chatRoomRepository.findById(chat.getRoomId())
+                .ifPresent(chatRoom -> {
+                    chatRoom.updateLastChat(chat.getContent(), chat.getSender(), chat.getCreatedAt());
+                    chatRoomRepository.save(chatRoom);
+                });
     }
 }

@@ -11,7 +11,7 @@ public record ChatResponse(
         String content,
         String sender,
         Set<String> unreadUsername,
-        String roomId,
+        Long roomId,
         Double sentimentScore,
         LocalDateTime createdAt
 ) {

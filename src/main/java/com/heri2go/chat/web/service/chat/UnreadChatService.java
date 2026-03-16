@@ -10,8 +10,10 @@ import com.heri2go.chat.web.service.chat.response.UnreadChatResponse;
 import com.heri2go.chat.web.service.session.ConnectInfoProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Service
@@ -21,23 +23,25 @@ public class UnreadChatService {
     private final RedisDao redisDao;
     private final ConnectInfoProvider cip;
 
-    public Mono<ChatResponse> save(Chat chat) {
-        return unreadChatRepository.saveAll(UnreadChat.from(chat))
-                .then(Mono.just(ChatResponse.from(chat)));
+    @Transactional
+    public ChatResponse save(Chat chat) {
+        unreadChatRepository.saveAll(UnreadChat.from(chat));
+        return ChatResponse.from(chat);
     }
 
-    public Flux<UnreadChatResponse> getOwnByUserDetails(UserDetailsImpl userDetails) {
-        return unreadChatRepository.findAllByUnreadUsername(userDetails.getUsername())
-                .map(UnreadChatResponse::from);
+    @Transactional(readOnly = true)
+    public List<UnreadChatResponse> getOwnByUserDetails(UserDetailsImpl userDetails) {
+        return unreadChatRepository.findAllByUnreadUsername(userDetails.getUsername()).stream()
+                .map(UnreadChatResponse::from)
+                .toList();
     }
 
-    public Flux<UnreadChatResponse> getOfflineChat(UserDetailsImpl userDetails) {
+    public List<UnreadChatResponse> getOfflineChat(UserDetailsImpl userDetails) {
         String lastOnlineTimeKey = cip.getLastOnlineTimeKey(userDetails.getUsername());
-        return redisDao.getLastOnlineTime(lastOnlineTimeKey)
-                .flatMapMany(lastOnlineTime ->
-                        unreadChatRepository.findAllByUnreadUsername(userDetails.getUsername())
-                                .filter(unreadChat -> unreadChat.getCreatedAt().isAfter(lastOnlineTime))
-                                .map(UnreadChatResponse::from)
-                );
+        LocalDateTime lastOnlineTime = redisDao.getLastOnlineTime(lastOnlineTimeKey);
+        return unreadChatRepository.findAllByUnreadUsername(userDetails.getUsername()).stream()
+                .filter(unreadChat -> unreadChat.getCreatedAt().isAfter(lastOnlineTime))
+                .map(UnreadChatResponse::from)
+                .toList();
     }
 }
