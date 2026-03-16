@@ -1,11 +1,12 @@
 package com.heri2go.chat.domain.user;
 
-import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
-import reactor.core.publisher.Mono;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends ReactiveMongoRepository<User, String> {
+import java.util.Optional;
 
-    Mono<User> findByUsername(String username);
+public interface UserRepository extends JpaRepository<User, Long> {
 
-    Mono<Boolean> existsByUsername(String username);
+    Optional<User> findByUsername(String username);
+
+    boolean existsByUsername(String username);
 }

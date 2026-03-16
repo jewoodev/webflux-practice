@@ -4,7 +4,8 @@ import com.heri2go.chat.IntegrationTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import reactor.test.StepVerifier;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class RefreshHashRepositoryTest extends IntegrationTestSupport {
 
@@ -12,8 +13,7 @@ class RefreshHashRepositoryTest extends IntegrationTestSupport {
 
     @AfterEach
     void tearDown() {
-        redisDao.delete("RefreshHash:" + testUsername)
-                .block();
+        redisDao.delete("RefreshHash:" + testUsername);
     }
 
     @DisplayName("리프레쉬 토큰은 메모리에 저장될 수 있고, 저장된 토큰은 읽어질 수 있다.")
@@ -26,12 +26,11 @@ class RefreshHashRepositoryTest extends IntegrationTestSupport {
                 .refreshToken(refreshToken)
                 .build();
 
-        // when && then
-        refreshHashRepository.save(refreshHash)
-                .block();
+        // when
+        refreshHashRepository.save(refreshHash);
 
-        StepVerifier.create(refreshHashRepository.findByUsername(testUsername))
-                .expectNextMatches(token -> token.equals(refreshToken))
-                .verifyComplete();
+        // then
+        String foundToken = refreshHashRepository.findByUsername(testUsername);
+        assertThat(foundToken).isEqualTo(refreshToken);
     }
 }

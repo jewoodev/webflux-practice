@@ -1,20 +1,20 @@
 package com.heri2go.chat.domain.user;
 
-import com.heri2go.chat.MongoTestSupport;
+import com.heri2go.chat.JpaTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import reactor.test.StepVerifier;
+
+import java.util.Optional;
 
 import static com.heri2go.chat.domain.user.Role.LAB;
+import static org.assertj.core.api.Assertions.assertThat;
 
-class UserRepositoryTest extends MongoTestSupport {
+class UserRepositoryTest extends JpaTestSupport {
 
     @AfterEach
     void tearDown() {
-        mongoTemplate.dropCollection(User.class)
-                .then(mongoTemplate.createCollection(User.class))
-                .block();
+        userRepository.deleteAllInBatch();
     }
 
     @DisplayName("유저는 username 값으로 존재 여부를 확인될 수 있다.")
@@ -28,13 +28,13 @@ class UserRepositoryTest extends MongoTestSupport {
                         .email("Test email")
                         .role(LAB)
                         .build()
-        ).block();
+        );
 
         // when
-        StepVerifier.create(userRepository.existsByUsername("Test username"))
-                // then
-                .expectNext(true)
-                .verifyComplete();
+        boolean exists = userRepository.existsByUsername("Test username");
+
+        // then
+        assertThat(exists).isTrue();
     }
 
     @DisplayName("유저는 id 값으로 조회될 수 있다.")
@@ -51,17 +51,17 @@ class UserRepositoryTest extends MongoTestSupport {
                         .email(testEmail)
                         .role(LAB)
                         .build()
-        ).block();
+        );
 
         // when
-        StepVerifier.create(userRepository.findById(savedUser.getId()))
-                // then
-                .expectNextMatches(user -> user.getUsername().equals(testUsername) &&
-                        user.getPassword().equals(testPassword) &&
-                        user.getEmail().equals(testEmail) &&
-                        user.getRole().equals(LAB)
-                )
-                .verifyComplete();
+        Optional<User> foundUser = userRepository.findById(savedUser.getId());
+
+        // then
+        assertThat(foundUser).isPresent();
+        assertThat(foundUser.get().getUsername()).isEqualTo(testUsername);
+        assertThat(foundUser.get().getPassword()).isEqualTo(testPassword);
+        assertThat(foundUser.get().getEmail()).isEqualTo(testEmail);
+        assertThat(foundUser.get().getRole()).isEqualTo(LAB);
     }
 
     @DisplayName("유저는 username 값으로 조회될 수 있다.")
@@ -78,16 +78,16 @@ class UserRepositoryTest extends MongoTestSupport {
                         .email(testEmail)
                         .role(LAB)
                         .build()
-        ).block();
+        );
 
         // when
-        StepVerifier.create(userRepository.findByUsername(testUsername))
-                // then
-                .expectNextMatches(user -> user.getUsername().equals(testUsername) &&
-                        user.getPassword().equals(testPassword) &&
-                        user.getEmail().equals(testEmail) &&
-                        user.getRole().equals(LAB)
-                )
-                .verifyComplete();
+        Optional<User> foundUser = userRepository.findByUsername(testUsername);
+
+        // then
+        assertThat(foundUser).isPresent();
+        assertThat(foundUser.get().getUsername()).isEqualTo(testUsername);
+        assertThat(foundUser.get().getPassword()).isEqualTo(testPassword);
+        assertThat(foundUser.get().getEmail()).isEqualTo(testEmail);
+        assertThat(foundUser.get().getRole()).isEqualTo(LAB);
     }
 }

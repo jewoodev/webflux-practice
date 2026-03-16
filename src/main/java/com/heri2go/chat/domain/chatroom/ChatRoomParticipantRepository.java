@@ -1,10 +1,10 @@
 package com.heri2go.chat.domain.chatroom;
 
-import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-import reactor.core.publisher.Flux;
+import java.util.List;
 
-public interface ChatRoomParticipantRepository extends ReactiveMongoRepository<ChatRoomParticipant, String> {
+public interface ChatRoomParticipantRepository extends JpaRepository<ChatRoomParticipant, Long> {
 
-    Flux<ChatRoomParticipant> findAllByUserId(String userId);
+    List<ChatRoomParticipant> findAllByUserId(Long userId);
 }

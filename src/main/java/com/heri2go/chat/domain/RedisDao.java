@@ -2,78 +2,72 @@ package com.heri2go.chat.domain;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.ReactiveSubscription;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.listener.PatternTopic;
-import org.springframework.data.redis.listener.ReactiveRedisMessageListenerContainer;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @RequiredArgsConstructor
 @Component
 public class RedisDao {
 
-    private final ReactiveRedisTemplate<String, String> redisTemplate;
-    private final ReactiveRedisMessageListenerContainer listenerContainer;
+    private final StringRedisTemplate redisTemplate;
 
-    public Flux<ReactiveSubscription.PatternMessage<String, String, String>> listenToPattern(String pattern) {
-        return listenerContainer.receive(new PatternTopic(pattern));
+    public void convertAndSend(String destination, String message) {
+        redisTemplate.convertAndSend(destination, message);
     }
 
-    public Mono<Long> convertAndSend(String destination, String message) {
-        return redisTemplate.convertAndSend(destination, message);
-    }
-
-    public Mono<Long> addToSet(String key, String... values) {
+    public Long addToSet(String key, String... values) {
         return redisTemplate.opsForSet().add(key, values);
     }
 
-    public Flux<String> getAllMembersOfSet(String key) {
+    public Set<String> getAllMembersOfSet(String key) {
         return redisTemplate.opsForSet().members(key);
     }
 
-    public Mono<Boolean> putToHash(String key, String mapKey, String mapValue) {
-        return redisTemplate.opsForHash().put(key, mapKey, mapValue);
+    public void putToHash(String key, String mapKey, String mapValue) {
+        redisTemplate.opsForHash().put(key, mapKey, mapValue);
     }
 
-    public Mono<Boolean> putAllToHash(String key, Map<?, ?> map) {
-        return redisTemplate.opsForHash().putAll(key, map);
+    public void putAllToHash(String key, Map<?, ?> map) {
+        redisTemplate.opsForHash().putAll(key, map);
     }
 
-    public Flux<Map.Entry<Object, Object>> getEntries(String key) {
+    public Map<Object, Object> getEntries(String key) {
         return redisTemplate.opsForHash().entries(key);
     }
 
-    public Mono<Long> removeFromSet(String key, Object... value) {
+    public Long removeFromSet(String key, Object... value) {
         return redisTemplate.opsForSet().remove(key, value);
     }
 
-    public Mono<Long> delete(String... key) {
-        return redisTemplate.delete(key);
+    public void delete(String... key) {
+        for (String k : key) {
+            redisTemplate.delete(k);
+        }
     }
 
-    public Mono<Boolean> expire(String key, Duration timeout) {
+    public Boolean expire(String key, Duration timeout) {
         return redisTemplate.expire(key, timeout);
     }
 
-    public Mono<Boolean> setString(String key, String value) {
-        return redisTemplate.opsForValue().set(key, value);
+    public void setString(String key, String value) {
+        redisTemplate.opsForValue().set(key, value);
     }
 
-    public Mono<LocalDateTime> getLastOnlineTime(String key) {
-        return redisTemplate.opsForValue().get(key)
-                .map(timeStr -> LocalDateTime.parse(timeStr))
-                .defaultIfEmpty(LocalDateTime.MIN);
+    public LocalDateTime getLastOnlineTime(String key) {
+        String timeStr = redisTemplate.opsForValue().get(key);
+        if (timeStr == null) {
+            return LocalDateTime.MIN;
+        }
+        return LocalDateTime.parse(timeStr);
     }
 
-    public Mono<String> getString(String key) {
+    public String getString(String key) {
         return redisTemplate.opsForValue().get(key);
     }
 }
-

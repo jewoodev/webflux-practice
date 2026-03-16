@@ -1,9 +1,10 @@
 package com.heri2go.chat.domain.chat;
 
-import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
-import reactor.core.publisher.Flux;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UnreadChatRepository extends ReactiveMongoRepository<UnreadChat, String> {
+import java.util.List;
 
-    Flux<UnreadChat> findAllByUnreadUsername(String username);
+public interface UnreadChatRepository extends JpaRepository<UnreadChat, Long> {
+
+    List<UnreadChat> findAllByUnreadUsername(String username);
 }

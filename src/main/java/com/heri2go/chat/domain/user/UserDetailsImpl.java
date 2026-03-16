@@ -13,7 +13,7 @@ public class UserDetailsImpl implements UserDetails {
 
     private final UserResponse userResp;
 
-    public String getUserId() {
+    public Long getUserId() {
         return userResp.id();
     }
 

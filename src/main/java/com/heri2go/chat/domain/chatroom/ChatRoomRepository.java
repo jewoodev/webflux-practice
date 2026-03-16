@@ -1,7 +1,7 @@
 package com.heri2go.chat.domain.chatroom;
 
-import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ChatRoomRepository extends ReactiveMongoRepository<ChatRoom, String> {
+public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
 }

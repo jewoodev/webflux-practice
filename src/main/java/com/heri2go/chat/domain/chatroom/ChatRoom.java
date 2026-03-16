@@ -2,36 +2,40 @@ package com.heri2go.chat.domain.chatroom;
 
 import com.heri2go.chat.domain.BaseTimeEntity;
 import com.heri2go.chat.web.controller.chatroom.request.ChatRoomCreateRequest;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Document
+@Entity
+@Table(name = "chat_rooms")
 public class ChatRoom extends BaseTimeEntity {
 
     @Id
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Indexed
+    @Column(name = "order_id")
     private String orderId;
     private String roomName;
-    private Set<String> participantIds;
+
+    @ElementCollection
+    @CollectionTable(name = "chat_room_participant_ids", joinColumns = @JoinColumn(name = "chat_room_id"))
+    @Column(name = "participant_id")
+    private Set<Long> participantIds;
+
     private String lastMessage;
     private String lastSender;
-    
     private LocalDateTime lastMessageTime;
 
     @Builder
-    private ChatRoom(String orderId, String roomName, Set<String> participantIds, String lastMessage, String lastSender) {
+    private ChatRoom(String orderId, String roomName, Set<Long> participantIds, String lastMessage, String lastSender) {
         this.orderId = orderId;
         this.roomName = roomName;
         this.participantIds = participantIds;
@@ -47,5 +51,12 @@ public class ChatRoom extends BaseTimeEntity {
                 .lastMessage(request.lastMessage())
                 .lastSender(request.lastSender())
                 .build();
+    }
+
+    public void updateLastChat(String lastMessage, String lastSender, LocalDateTime lastMessageTime) {
+        this.lastMessage = lastMessage;
+        this.lastSender = lastSender;
+        this.lastMessageTime = lastMessageTime;
+        this.updatedAt = lastMessageTime;
     }
 }

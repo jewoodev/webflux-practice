@@ -1,93 +1,89 @@
 package com.heri2go.chat.domain.chat;
 
-import com.heri2go.chat.MongoTestSupport;
+import com.heri2go.chat.JpaTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import reactor.test.StepVerifier;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.util.List;
 
-class ChatRepositoryTest extends MongoTestSupport {
+import static org.assertj.core.api.Assertions.assertThat;
+
+class ChatRepositoryTest extends JpaTestSupport {
 
     @AfterEach
-    public void tearDown() {
-        mongoTemplate.dropCollection(Chat.class)
-                .then(mongoTemplate.createCollection(Chat.class))
-                .block();
+    void tearDown() {
+        chatRepository.deleteAllInBatch();
     }
 
     @DisplayName("채팅은 유효한 채팅방 id 값으로 조회될 수 있다.")
     @Test
-    public void chatCanGet_byValidRoomId() {
+    void chatCanGet_byValidRoomId() {
         // given
-        LocalDateTime now = LocalDateTime.now().withNano(0);
-
         Chat chat1 = Chat.builder()
-                .roomId("1")
+                .roomId(1L)
                 .content("첫 번째 메시지")
                 .build();
 
         Chat chat2 = Chat.builder()
-                .roomId("1")
+                .roomId(1L)
                 .content("두 번째 메시지")
                 .build();
 
         Chat chat3 = Chat.builder()
-                .roomId("1")
+                .roomId(1L)
                 .content("세 번째 메시지")
                 .build();
 
         Chat chat4 = Chat.builder()
-                .roomId("2")
+                .roomId(2L)
                 .content("다른 방 메시지")
                 .build();
 
         // 데이터 저장
-        chatRepository.saveAll(Arrays.asList(chat1, chat2, chat3, chat4))
-                .blockLast();
+        chatRepository.saveAll(List.of(chat1, chat2, chat3, chat4));
 
-        // when // then
-        StepVerifier.create(chatRepository.findByRoomId("1"))
-                .expectNextMatches(chat -> chat.getContent().equals("첫 번째 메시지"))
-                .expectNextMatches(chat -> chat.getContent().equals("두 번째 메시지"))
-                .expectNextMatches(chat -> chat.getContent().equals("세 번째 메시지"))
-                .verifyComplete();
+        // when
+        List<Chat> chats = chatRepository.findByRoomId(1L);
+
+        // then
+        assertThat(chats).hasSize(3);
+        assertThat(chats.get(0).getContent()).isEqualTo("첫 번째 메시지");
+        assertThat(chats.get(1).getContent()).isEqualTo("두 번째 메시지");
+        assertThat(chats.get(2).getContent()).isEqualTo("세 번째 메시지");
     }
 
     @DisplayName("채팅은 유효하지 채팅방 id 값으로 조회될 수 없다다.")
     @Test
-    public void chatCanNotGet_byInvalidRoomId() {
+    void chatCanNotGet_byInvalidRoomId() {
         // given
-        LocalDateTime now = LocalDateTime.now().withNano(0);
-
         Chat chat1 = Chat.builder()
-                .roomId("1")
+                .roomId(1L)
                 .content("첫 번째 메시지")
                 .build();
 
         Chat chat2 = Chat.builder()
-                .roomId("1")
+                .roomId(1L)
                 .content("두 번째 메시지")
                 .build();
 
         Chat chat3 = Chat.builder()
-                .roomId("1")
+                .roomId(1L)
                 .content("세 번째 메시지")
                 .build();
 
         Chat chat4 = Chat.builder()
-                .roomId("2")
+                .roomId(2L)
                 .content("다른 방 메시지")
                 .build();
 
         // 데이터 저장
-        chatRepository.saveAll(Arrays.asList(chat1, chat2, chat3, chat4))
-                .blockLast();
+        chatRepository.saveAll(List.of(chat1, chat2, chat3, chat4));
 
-        // when // then
-        StepVerifier.create(chatRepository.findByRoomId("3"))
-                .expectComplete();
+        // when
+        List<Chat> chats = chatRepository.findByRoomId(3L);
+
+        // then
+        assertThat(chats).isEmpty();
     }
 }
